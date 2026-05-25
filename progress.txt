@@ -1,3 +1,18 @@
+## 2026-05-25 - US-014
+- Implemented `mcp/customer-mcp/customer_server.py` — four read-only tools: `list_assets(customer_id)`, `list_contracts(customer_id)`, `compliance_posture(customer_id)`, `head(resource_type, customer_id)`; every response embeds `customer-portal://<resource>/<id>@<updated_at>` source URI; bearer token from `CUSTOMER_PORTAL_BEARER_TOKEN` env var; portal URL from `CUSTOMER_PORTAL_URL` env var (default `http://localhost:3000`)
+- Implemented `mcp/customer-mcp/__main__.py` — MCP JSON-RPC 2.0 stdio server; identical pattern to `portfolio-mcp/__main__.py`
+- Added 21 tests in `mcp/customer-mcp/tests/test_customer_server.py`; live smoke test passes against port 3004 with `CUSTOMER_PORTAL_BEARER_TOKEN=smoke-test-token`
+- Created root `conftest.py` — adds both MCP parent dirs to sys.path; replaced the now-removed `mcp/portfolio-mcp/tests/conftest.py`; removed `__init__.py` from portfolio-mcp tests to prevent `tests` package collisions
+- Updated `pyproject.toml` testpaths to include `mcp/customer-mcp/tests`
+- 119 total tests pass (1 skipped — live smoke skips without env vars); ruff clean; mypy clean (`MYPYPATH=mcp/customer-mcp`)
+- Files changed: mcp/customer-mcp/customer_server.py, mcp/customer-mcp/__main__.py, mcp/customer-mcp/tests/test_customer_server.py, conftest.py, pyproject.toml, deleted mcp/portfolio-mcp/tests/__init__.py and conftest.py
+- **Learnings for future iterations:**
+  - `customer-mcp` server file is named `customer_server.py` (not `server.py`) to avoid sys.path collision with `portfolio-mcp/server.py`; follow this unique-name pattern for any future MCP servers
+  - Root `conftest.py` handles sys.path for all MCP test suites; do NOT add `__init__.py` to MCP test dirs — it causes `tests` package name collisions when multiple MCP test dirs are in testpaths
+  - Customer portal dev server may bind to port 3002–3004 depending on what's in use; check `/tmp/next-dev.log` for actual port
+  - `head(resource_type, customer_id)` returns max updated_at across the collection for that resource type, not for a specific item; used for collection-level freshness
+---
+
 ## 2026-05-25 - US-013
 - Added `updatedAt DateTime @updatedAt @default(now())` to `Asset` and `ContractedService` in `prisma/schema.prisma`; applied via `prisma db push` (no migrations dir — portal uses db push workflow)
 - Created `lib/prisma-readonly.ts` — PrismaClient using `READONLY_DATABASE_URL` env var (falls back to `DATABASE_URL` if not set) for read-only query isolation
