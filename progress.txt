@@ -1,3 +1,17 @@
+## 2026-05-25 - US-017
+- Implemented `prompts/orchestrator/00-intake.md` — full seven-step orchestrator loop for phase 00-intake
+- Step 1: read engagement CLAUDE.md, verify scaffold; Step 2: announce plan (HITL gate 0); Step 3: HITL gate 1 (entry confirm, 4-item checklist); Step 4: invoke interviewer subagent with elicitation goals; Step 5: populate scope.md from template scope@1.0.0; Step 6: run validator with max-2-retry bounded policy; Step 7: HITL gate 3 ratification + commit
+- Allowed subagents: interviewer only; forbidden: portfolio-retriever, customer-data-retriever, synthesizer; no direct tool access
+- Template version pin: `scope@1.0.0` in frontmatter enforced; harness_version mismatch aborts
+- Bounded-retry policy: max 2 retries per validator/synthesis pass before escalating to consultant
+- All 175 tests still pass; ruff + mypy clean
+- Files changed: prompts/orchestrator/00-intake.md
+- **Learnings for future iterations:**
+  - Orchestrator prompts are pure markdown with no Python code; quality checks (ruff/mypy/pytest) still run and pass (just no new code to check)
+  - Template version pin format in orchestrator prompt: `scope@1.0.0` — must match the `template:` field in the template file's YAML frontmatter exactly
+  - HITL gates are numbered by the PRD's Q9 convention: gate 1 = entry confirm, gate 3 = ratification (gate 2 is reserved for mid-phase check-in in later phases)
+---
+
 ## 2026-05-25 - US-016
 - Implemented `harness/explain.py` — `explain_claim(repo, claim_id)` walks the composed-claim graph via `from: A + B` recursively; returns `ExplainResult(root, decisions, chain_ids)`; tree nodes are `ExplainNode(claim, children, missing, is_cycle)`; leaf facts are [known]/[elicited] claims with no `composed_from`; cycles detected with a `frozenset` of visited IDs passed down each recursion path; diamond DAGs (same claim reachable via multiple paths) are correctly distinguished from cycles since `frozenset` is path-local
 - `_parse_decisions_text(text, artifact)` parses `_decisions.md` YAML blocks (same fence+block pattern as decay_check.py); supports both `overrides: SINGLE-ID` and `overrides:` list styles; `_load_decisions(repo)` wraps file loading
