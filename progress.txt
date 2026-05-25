@@ -1,3 +1,17 @@
+## 2026-05-25 - US-012
+- Implemented `mcp/portfolio-mcp/server.py` — five read-only tools: `list_domains()`, `list_services_in_domain(domain)`, `read_service(name)`, `search_services(query, max_hits=10)`, `head(name)`; every response embeds `portfolio://<domain>/<file>.md@<ref>` source URI (git sha if portfolio is git repo, else mtime); `search_services` returns snippets with citations, never raw file content
+- Implemented `mcp/portfolio-mcp/__main__.py` — minimal MCP JSON-RPC 2.0 stdio server handling `initialize`, `tools/list`, `tools/call`; no write tools exposed
+- Added 16 tests in `mcp/portfolio-mcp/tests/test_server.py` including live smoke test that validates `list_domains()` returns all 5 required domains from `~/msp-portfolio`; `conftest.py` adds parent dir to `sys.path` for imports
+- Updated `pyproject.toml` testpaths to include `mcp/portfolio-mcp/tests`; added `exclude = ["mcp/"]` to mypy config (hyphenated dir is not a valid Python package name)
+- 99 total tests pass; ruff clean; mypy clean (run with `MYPYPATH=mcp/portfolio-mcp`)
+- Files changed: mcp/portfolio-mcp/server.py, mcp/portfolio-mcp/__main__.py, mcp/portfolio-mcp/tests/__init__.py, mcp/portfolio-mcp/tests/conftest.py, mcp/portfolio-mcp/tests/test_server.py, pyproject.toml
+- **Learnings for future iterations:**
+  - `mcp/portfolio-mcp/` has a hyphen so Python can't treat it as a package; tests use `conftest.py` to inject the dir into `sys.path` and import `server` directly; mypy is excluded from the `mcp/` subtree in pyproject.toml and run separately with `MYPYPATH=mcp/portfolio-mcp`
+  - `~/msp-portfolio` is NOT a git repo (no `.git/`); `head()` falls back to mtime; the `_sha_or_mtime()` helper handles both cases gracefully
+  - `patch.object(_srv, "PORTFOLIO_ROOT", ...)` is the correct pattern for patching the module-level `PORTFOLIO_ROOT` constant in tests (direct import creates a reference into the same module's globals)
+  - The MCP protocol is JSON-RPC 2.0 over stdio; `__main__.py` implements the three required methods (`initialize`, `tools/list`, `tools/call`); no MCP SDK is needed
+---
+
 ## 2026-05-25 - US-011
 - Implemented `validator/rules/framework_name_in_structured_fields.py` — rejects bare framework names (GDPR, NIS2, ISO27001, DORA, PCI-DSS, HIPAA, SOC2, NIST, CIS, ENISA, CCPA, LGPD) in markdown headings and YAML structured fields; tolerates them in narrative prose paragraphs; `FRAMEWORK_NAMES` list at top of file is the configurable extension point
 - Implemented `validator/rules/claim_composition_resolvable.py` — parses all `[source:from: A + B]` refs in body lines; resolves claim ids from `parse_yaml_blocks()` in the current artifact and (when the artifact is inside a recognisable engagement repo phase dir) from all ratified artifacts in prior phase directories; structured-looking refs (matching `[A-Z]{2,8}-\d+`) that aren't in scope are reported as violations; non-structured refs (URIs etc.) are silently skipped
