@@ -1,3 +1,19 @@
+## 2026-05-25 - US-035
+- Updated `validator/_util.py` `body_lines()` to skip HTML comment blocks (both multi-line `<!-- ... -->` and single-line); lines inside comments are no longer yielded to rules
+- Added 4 new tests to `validator/tests/test_rules.py` covering: multi-line comment skipped, single-line comment skipped, real claims after comment still validated, valid claim outside comment not suppressed
+- Added author warning callout to `templates/situation.template.md` (outside comment block, visible in rendered document)
+- Added author warning callout to `templates/retro.template.md` (same)
+- Updated `backlog/change-requests/CR-2026-001.md`: status open → shipped, shipped_version: 0.2.0
+- Updated `backlog/change-requests/CR-2026-002.md`: status open → shipped, shipped_version: 0.2.0
+- Bumped `CHANGELOG.md` to 0.2.0 with Fixed (CR-2026-001) and Changed (CR-2026-002) entries
+- Created git tag 0.2.0
+- Files changed: validator/_util.py, validator/tests/test_rules.py, templates/situation.template.md, templates/retro.template.md, backlog/change-requests/CR-2026-001.md, backlog/change-requests/CR-2026-002.md, CHANGELOG.md, .ralph/prd.json
+- **Learnings for future iterations:**
+  - body_lines() is the single choke-point for all validator rule input — fixing it here fixes false positives for all 12 rules simultaneously; no individual rule changes needed
+  - When body_lines() skips comment blocks, parse_yaml_blocks() (which calls body_lines()) also inherits the fix — fenced YAML blocks inside HTML comments are now also ignored
+  - Author warning callouts should be placed outside HTML comment blocks in templates (rendered blockquote `>` format) so they survive the comment-skipping and are visible to human authors
+---
+
 ## 2026-05-25 - US-034
 - Created `06-retro/retro.md`: ratified, validator-green, produced_by: synthesizer; §1 What Worked (6 bullets), §2 What Failed (3 bullets), §3 What Surprised (4 bullets), §4 Data-Quality Meta-Findings (1 contradiction total, 1 via path d, 0 via path c, 0 unresolved; MSP portfolio gaps SIEM/ISMS; customer-portal all endpoints healthy), §5 Change Requests (2 CRs)
 - Created `06-retro/_trace.jsonl`: 2 events (orchestrator/06-retro, synthesizer)
