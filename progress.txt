@@ -1,3 +1,20 @@
+## 2026-05-25 - US-021
+- Implemented `prompts/orchestrator/01-situation.md` — nine-step orchestrator loop for phase 01-situation
+- Entry condition check: halts if `00-intake/scope.md` frontmatter `status` is not `ratified`
+- Allowed subagents: all four (portfolio-retriever, customer-data-retriever, interviewer, synthesizer); synthesis gated behind complete retrieval+elicitation per design-principles §2
+- Step 4: two retriever invocations (portfolio and customer-data), each with minimum gate (must return >=1 [known] block each)
+- Step 5: interviewer elicits organisational context, gaps in retrieved data, strategic intent; minimum 3 [elicited] claims
+- Step 6: contradiction check before synthesis; `Blocks: 01-situation` contradictions block Step 7; resolution paths (a-d) presented to consultant
+- Step 7: synthesizer invoked with full claim context; SIT-NNN id continuity from retriever output; confidence propagation mandatory; `[SYNTHESIZER-CONFLICT]` flags loop back for orchestrator resolution
+- Step 8: validator with max-2 retry bounded policy; Step 9: HITL gate 3 ratification with exit-criteria checklist embedded
+- No new code; prompt markdown only; all 175 tests still pass; ruff + mypy clean
+- Files changed: prompts/orchestrator/01-situation.md
+- **Learnings for future iterations:**
+  - Situation orchestrator has 9 steps (not 7) because retrieval (4a+4b) and synthesis (7) are both explicit steps; numbered steps in the loop should match the actual complexity of the phase
+  - The contradiction-check step (Step 6) sits between elicitation and synthesis; later phases with more [inferred] claims will also need this step — always insert it before the synthesizer
+  - Exit-criteria checklist in Step 9 duplicates the bottom-of-file checklist intentionally: the ratification gate embeds the check inline so the consultant sees it at the right moment
+---
+
 ## 2026-05-25 - US-020
 - Implemented `prompts/subagents/synthesizer.md` — stateless synthesizer subagent; model Opus (never Haiku/Sonnet); no tool access
 - Emits [inferred] and [assumed] labels only; [known] and [elicited] are strictly forbidden
