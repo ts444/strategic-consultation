@@ -1,4 +1,8 @@
 ## Codebase Patterns
+- Python package root is `/home/tim/strategic-consultation/`; run pytest/ruff/mypy from there
+- `harness/` is a Python package (has `__init__.py`); tests live in `harness/tests/`
+- `pyproject.toml` at repo root configures ruff (target py310), mypy (strict), pytest testpaths
+- `_read_harness_version()` in harness/init.py resolves CHANGELOG.md via `Path(__file__).parent.parent`
 - prd.json lives at `.ralph/prd.json`, not at the repo root
 - progress.txt lives at the repo root (same dir as CLAUDE.md and design-principles.md)
 - All markdown documents (templates, schemas) reference design-principles.md as the binding spec
@@ -88,4 +92,18 @@
   - CR files must name the originating customer directly (design-principles requirement, no anonymisation) — the retro template and CR frontmatter both state this
   - §4.1 contradiction stats table is mandatory in retro.template.md — the orchestrator should populate it by querying _contradictions.md at phase entry, not from memory
   - handover.template.md reproduces (not references) all three registers (decisions, assumptions, risks) verbatim from _decisions.md, _assumptions.md, _risks.md so the customer-facing bundle is self-contained
+---
+
+## 2026-05-25 - US-007
+- Implemented `harness/init.py` — scaffold a new engagement repo from a single command
+- `harness/__init__.py` created (makes harness a Python package)
+- `pyproject.toml` created with ruff, mypy, and pytest configuration
+- `harness/tests/test_init.py` — 12 unit tests covering all acceptance criteria
+- Files changed: harness/__init__.py, harness/init.py, harness/tests/__init__.py, harness/tests/test_init.py, pyproject.toml
+- **Learnings for future iterations:**
+  - `harness/init.py` reads version from `Path(__file__).parent.parent / "CHANGELOG.md"` — stable as long as harness/ stays one level below repo root
+  - Empty register stubs use `{version}` and `{customer}` format placeholders in the `_REGISTER_STUBS` dict — adding new registers means updating this dict
+  - `_scaffold()` calls `target.mkdir(parents=True, exist_ok=False)` — raises FileExistsError if target exists; `main()` catches it and exits 1
+  - Non-empty target check is done before mkdir: `target.exists() and any(target.iterdir())` — covers the case where the dir exists but mkdir would succeed (empty dir)
+  - Git commit during scaffold sets no custom author/email; uses system git config; if git config is incomplete in CI, commit may fail
 ---
