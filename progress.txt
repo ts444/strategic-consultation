@@ -1,3 +1,20 @@
+## 2026-05-25 - US-022
+- Implemented `prompts/orchestrator/02-gap.md` — seven-step orchestrator loop for phase 02-gap
+- Entry condition: `01-situation/situation.md` must have `status: ratified`; halts immediately if not
+- Whitelisted subagents: synthesizer (primary), portfolio-retriever and customer-data-retriever (supplementary, conditional on missing evidence); interviewer explicitly forbidden
+- Step 4: supplementary retrieval (conditional, only for specific identified evidence gaps) + contradiction check before synthesis
+- Step 5: synthesizer invoked with full situation-phase claim context; compliance_drivers mandatory on every GAP block; confidence propagation enforced; `[SYNTHESIZER-CONFLICT]` flags loop back for orchestrator resolution
+- Exit criteria: every G-0N goal addressed by >=1 GAP or in §3 no-gap table; compliance_drivers on every block; validator green; zero unresolved Blocks: 02-gap contradictions
+- Step 6: validator with max-2 retry bounded policy; Step 7: HITL gate 3 ratification with exit-criteria checklist embedded
+- No new code; prompt markdown only; all 175 tests still pass; ruff + mypy clean
+- Files changed: prompts/orchestrator/02-gap.md
+- **Learnings for future iterations:**
+  - Gap phase is synthesizer-primary (not retrieval-primary like situation phase); retrievers are supplementary only — don't invoke them speculatively
+  - Interviewer is forbidden in gap phase; if soft-fact gaps are discovered, record as open question and proceed with available evidence
+  - compliance_drivers field is mandatory on every GAP block — this is enforced by gap_compliance_drivers_field.py validator rule; the prompt must repeat this instruction to the synthesizer explicitly
+  - §1 Goal Coverage Map must have an entry for every G-0N id from scope.md; a missing row is a validator violation via template_conformance rule
+---
+
 ## 2026-05-25 - US-021
 - Implemented `prompts/orchestrator/01-situation.md` — nine-step orchestrator loop for phase 01-situation
 - Entry condition check: halts if `00-intake/scope.md` frontmatter `status` is not `ratified`
