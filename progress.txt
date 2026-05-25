@@ -1,3 +1,22 @@
+## 2026-05-25 - US-023
+- Implemented `prompts/orchestrator/03-mapping.md` — seven-step orchestrator loop for phase 03-mapping
+- Entry condition: `02-gap/gaps.md` must have `status: ratified`; halts immediately if not
+- Whitelisted subagents: portfolio-retriever (primary retrieval, every gap), synthesizer (two-pass); interviewer and customer-data-retriever explicitly forbidden
+- Step 4: portfolio-retriever invoked for every GAP-NNN; `[no-known-service]` placeholder for gaps with no portfolio match; `head()` timestamps collected per domain
+- Step 5: contradiction check before synthesis; synthesis blocked while `Blocks: 03-mapping` unresolved
+- Step 6: two-pass synthesis — Pass A (service-map.md exhaustive) must be validator-green before Pass B (recommendations.md curated); synthesizer selects `curated: true` entry per gap for recommendations
+- Four mandatory REC fields enforced: `compliance_relation`, `cost`, `lock_in`, `opportunity_cost`; `none`/`tbc` valid; absent is validator error
+- No bare framework names rule enforced in both artifacts (reference CMP-NNN ids instead)
+- Step 7: validator run on both artifacts sequentially; max-2 retry each; Step 8: HITL gate 3 ratifies both together in one commit
+- No new code; prompt markdown only; all 175 tests still pass; ruff + mypy clean
+- Files changed: prompts/orchestrator/03-mapping.md
+- **Learnings for future iterations:**
+  - Mapping phase is the only phase producing two artifacts; both must be validator-green and ratified in one commit — never commit one without the other
+  - Dual-artifact sequencing is strict: service-map.md (exhaustive) first, then recommendations.md (curated); Pass B synthesis inputs depend on Pass A being clean
+  - portfolio-retriever is invoked for every gap, not conditionally — this is the heavy retrieval phase; `[no-known-service]` is a valid result, not a failure
+  - The `curated: true/false` field on MAP entries is how the synthesizer signals which entries should become REC blocks — set it during Pass A so Pass B can select correctly
+---
+
 ## 2026-05-25 - US-022
 - Implemented `prompts/orchestrator/02-gap.md` — seven-step orchestrator loop for phase 02-gap
 - Entry condition: `01-situation/situation.md` must have `status: ratified`; halts immediately if not
