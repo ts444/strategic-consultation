@@ -1,3 +1,25 @@
+## 2026-05-25 - US-024
+- Implemented `prompts/orchestrator/04-roadmap.md` — seven-step orchestrator loop for phase 04-roadmap
+- Entry condition: `03-mapping/recommendations.md` must have `status: ratified`; halts immediately if not
+- Whitelisted subagents: synthesizer (primary), portfolio-retriever and customer-data-retriever (supplementary, conditional on specific evidence gaps); interviewer forbidden
+- Step 4: conditional supplementary retrieval + contradiction check before synthesis
+- Step 5: synthesizer invoked with all REC-NNN, GAP-NNN, G-0N, CMP-NNN, BUD-NNN, RSK-NNN context; produces roadmap.md with mandatory `## Sequencing argument` H2 and RMI-NNN blocks
+- Sequencing argument: written justification for foundations→enablers→value-drivers→optimisations ordering; references REC-NNN ids that drive sequencing; [inferred] claim with from: notation
+- Mandatory fields enforced on every RMI block: `compliance_role` (constraint|deadline|enabler|none), `budget_envelope` (BUD-NNN), `quick_win` (boolean); `compliance_deadline` required iff role=deadline, absent otherwise
+- At least one Y1 item must have `quick_win: true` (FR-26; validator enforces this)
+- Every REC-NNN must be addressed by at least one RMI-NNN
+- Calendar projection §3 covers Y1–Y3 with milestones traceable to RMI ids
+- Step 6: validator run with max-2 retries; key rules: template_conformance, roadmap_item_required_fields, framework_name_in_structured_fields
+- Step 7: HITL gate 3 ratification with exit-criteria checklist embedded
+- No new code; prompt markdown only; all 175 tests still pass; ruff + mypy clean
+- Files changed: prompts/orchestrator/04-roadmap.md
+- **Learnings for future iterations:**
+  - Roadmap is the only phase with a mandatory `## Sequencing argument` H2 — template_conformance.py checks for it by name; the orchestrator must instruct the synthesizer explicitly
+  - capability_phase ordering (foundations→enablers→value-drivers→optimisations) is a constraint on sequencing, not just a label — the sequencing argument must justify why each item is in its phase
+  - `compliance_deadline` has an unusual rule: required iff role=deadline, must be ABSENT otherwise — both presence and absence are validated; the orchestrator must tell the synthesizer about the absence requirement
+  - Supplementary retrievers in this phase are genuinely supplementary (unlike mapping, where portfolio-retriever is mandatory for every gap); only invoke if a specific evidence gap exists
+---
+
 ## 2026-05-25 - US-023
 - Implemented `prompts/orchestrator/03-mapping.md` — seven-step orchestrator loop for phase 03-mapping
 - Entry condition: `02-gap/gaps.md` must have `status: ratified`; halts immediately if not
