@@ -1,3 +1,20 @@
+## 2026-05-25 - US-029
+- Implemented `harness/observability.py` — append_trace_event() and append_source_event()
+- append_trace_event appends to `<phase_dir>/_trace.jsonl`: timestamp, subagent, model, prompt_hash, input_hash, output_hash, duration_ms
+- append_source_event appends to `<phase_dir>/_sources.jsonl`: timestamp, tool, source_uri
+- Both functions use mode="a" (append-only); create parent dirs if absent
+- Added `Warning` dataclass to `validator/__init__.py` (distinct from `Violation`; does not affect exit code)
+- Created `validator/rules/trace_populated.py` — soft-warning rule: fires if `_trace.jsonl` is missing or empty in the artifact's phase dir; returns `Warning` not `Violation`
+- Updated `validator/cli.py`: new `_WARN_CHECKERS` list + `_run_warn_rules()`; warnings printed as `[WARN:<rule>]` blocks before hard-violation blocks; exit code remains 0 on warnings-only
+- 11 tests in `harness/tests/test_observability.py` + 6 tests in `validator/tests/test_trace_populated.py`; all 276 tests pass; ruff + mypy clean
+- Files changed: harness/observability.py (new), harness/tests/test_observability.py (new), validator/__init__.py (Warning added), validator/rules/trace_populated.py (new), validator/tests/test_trace_populated.py (new), validator/cli.py (warn-checkers)
+- **Learnings for future iterations:**
+  - `Warning` and `Violation` are separate types — `Warning` never changes the exit code; validators import from `validator` package which now exports both
+  - `_run_warn_rules()` is structurally identical to `_run_rules()` but typed with `Warning` — keep them separate so mypy can distinguish the return types
+  - _trace.jsonl and _sources.jsonl live as siblings of the artifact (phase_dir / "_trace.jsonl"); the rule checks `path.parent` to find the phase dir
+  - The `Mapping` type (not `dict`) is needed for `_append_jsonl` parameter to satisfy mypy's invariance check on dict
+---
+
 ## 2026-05-25 - US-028
 - Implemented `harness/check_contradictions.py` — contradiction detection, register writing, and phase-blocking
 - Detection: subject+predicate overlap (≥2 shared content words from first 2 key-words) with opposite polarity (one claim has negation word, other does not)
