@@ -8,10 +8,12 @@ from pathlib import Path
 
 from validator import Violation
 from validator.rules import (
+    claim_composition_resolvable,
     claim_confidence_present,
     claim_label_present,
     claim_source_present,
     confidence_propagation,
+    framework_name_in_structured_fields,
     frontmatter_required_fields,
     gap_compliance_drivers_field,
     label_producer_binding,
@@ -31,6 +33,8 @@ _CHECKERS: list[tuple[str, Callable[[Path], list[Violation]]]] = [
     (gap_compliance_drivers_field.RULE, gap_compliance_drivers_field.check),
     (recommendation_required_fields.RULE, recommendation_required_fields.check),
     (roadmap_item_required_fields.RULE, roadmap_item_required_fields.check),
+    (framework_name_in_structured_fields.RULE, framework_name_in_structured_fields.check),
+    (claim_composition_resolvable.RULE, claim_composition_resolvable.check),
 ]
 
 

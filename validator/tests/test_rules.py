@@ -882,3 +882,211 @@ def test_rmi_required_fields_fail_no_y1_quick_win(tmp_path: Path) -> None:
     qw_violations = [v for v in violations if "quick_win" in v.message]
     assert len(qw_violations) == 1
     assert qw_violations[0].line is None  # file-level violation
+
+
+# ---------------------------------------------------------------------------
+# framework_name_in_structured_fields
+# ---------------------------------------------------------------------------
+
+from validator.rules import (  # noqa: E402
+    claim_composition_resolvable,
+    framework_name_in_structured_fields,
+)
+
+
+def test_framework_name_pass_prose(tmp_path: Path) -> None:
+    # Framework names in narrative prose paragraphs are tolerated
+    body = "This system must comply with GDPR and NIS2 requirements.\n"
+    f = _artifact(tmp_path, body)
+    assert framework_name_in_structured_fields.check(f) == []
+
+
+def test_framework_name_fail_heading(tmp_path: Path) -> None:
+    body = "## GDPR Compliance Requirements\n\nSome text.\n"
+    f = _artifact(tmp_path, body)
+    violations = framework_name_in_structured_fields.check(f)
+    assert len(violations) == 1
+    assert violations[0].rule == "framework_name_in_structured_fields"
+    assert "GDPR" in violations[0].message
+
+
+def test_framework_name_fail_yaml_scalar_field(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: GAP-001\n"
+        "title: GDPR alignment gap\n"
+        "compliance_drivers: []\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    violations = framework_name_in_structured_fields.check(f)
+    assert len(violations) == 1
+    assert "GDPR" in violations[0].message
+    assert "title" in violations[0].message
+
+
+def test_framework_name_fail_yaml_list_field(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: REC-001\n"
+        "compliance_relation: NIS2\n"
+        "cost: tbc\n"
+        "lock_in: none\n"
+        "opportunity_cost: none\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    violations = framework_name_in_structured_fields.check(f)
+    assert len(violations) == 1
+    assert "NIS2" in violations[0].message
+
+
+def test_framework_name_pass_cmp_reference(tmp_path: Path) -> None:
+    # CMP-NNN references are correct and should not trigger
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: GAP-001\n"
+        "compliance_drivers:\n"
+        "  - CMP-001\n"
+        "  - CMP-002\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    assert framework_name_in_structured_fields.check(f) == []
+
+
+def test_framework_name_multiple_frameworks(tmp_path: Path) -> None:
+    body = "## ISO27001 and DORA Readiness\n\nContent.\n"
+    f = _artifact(tmp_path, body)
+    violations = framework_name_in_structured_fields.check(f)
+    # Each framework match in the heading generates a violation (first match per heading)
+    assert len(violations) >= 1
+
+
+# ---------------------------------------------------------------------------
+# claim_composition_resolvable
+# ---------------------------------------------------------------------------
+
+
+def test_composition_resolvable_pass_in_scope(tmp_path: Path) -> None:
+    # GAP-001 is declared in the same artifact, so from: GAP-001 + SIT-001 only
+    # raises a violation for SIT-001 which is a structured id not in scope.
+    # Test with both ids declared in the same doc → no violations.
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: GAP-001\n"
+        "severity: high\n"
+        "---\n"
+        "```\n"
+        "```yaml\n"
+        "---\n"
+        "id: SIT-001\n"
+        "status: known\n"
+        "---\n"
+        "```\n"
+        "[inferred] [source:from: GAP-001 + SIT-001] [conf:M]\n"
+    )
+    f = _artifact(tmp_path, body)
+    assert claim_composition_resolvable.check(f) == []
+
+
+def test_composition_resolvable_fail_unknown_ref(tmp_path: Path) -> None:
+    body = "[inferred] [source:from: GAP-999 + SIT-999] [conf:M]\n"
+    f = _artifact(tmp_path, body)
+    violations = claim_composition_resolvable.check(f)
+    assert len(violations) == 2
+    assert violations[0].rule == "claim_composition_resolvable"
+    assert "GAP-999" in violations[0].message or "SIT-999" in violations[0].message
+
+
+def test_composition_resolvable_pass_no_from_refs(tmp_path: Path) -> None:
+    body = "[known] [source:portfolio://Security/soc.md@abc] [conf:H]\n"
+    f = _artifact(tmp_path, body)
+    assert claim_composition_resolvable.check(f) == []
+
+
+def test_composition_resolvable_pass_ratified_prior_phase(tmp_path: Path) -> None:
+    # Simulate engagement repo: 00-intake/ has ratified scope.md with GAP-001
+    intake_dir = tmp_path / "00-intake"
+    intake_dir.mkdir()
+    gap_dir = tmp_path / "02-gap"
+    gap_dir.mkdir()
+
+    # Prior ratified artifact declaring GAP-001
+    prior = intake_dir / "scope.md"
+    prior.write_text(
+        "---\n"
+        "phase: 00-intake\n"
+        "status: ratified\n"
+        "harness_version: 0.1.0\n"
+        "template: scope@1.0.0\n"
+        "---\n"
+        "```yaml\n"
+        "---\n"
+        "id: GAP-001\n"
+        "severity: high\n"
+        "---\n"
+        "```\n",
+        encoding="utf-8",
+    )
+
+    # Current artifact in 02-gap referencing GAP-001 from prior phase
+    gaps = gap_dir / "gaps.md"
+    gaps.write_text(
+        "---\n"
+        "phase: 02-gap\n"
+        "status: draft\n"
+        "harness_version: 0.1.0\n"
+        "template: gaps@1.0.0\n"
+        "---\n"
+        "[inferred] [source:from: GAP-001] [conf:M]\n",
+        encoding="utf-8",
+    )
+    assert claim_composition_resolvable.check(gaps) == []
+
+
+def test_composition_resolvable_fail_unratified_prior_phase(tmp_path: Path) -> None:
+    # Prior phase artifact is still draft (not ratified) — ids are excluded from scope
+    intake_dir = tmp_path / "00-intake"
+    intake_dir.mkdir()
+    gap_dir = tmp_path / "02-gap"
+    gap_dir.mkdir()
+
+    prior = intake_dir / "scope.md"
+    prior.write_text(
+        "---\n"
+        "phase: 00-intake\n"
+        "status: draft\n"
+        "harness_version: 0.1.0\n"
+        "template: scope@1.0.0\n"
+        "---\n"
+        "```yaml\n"
+        "---\n"
+        "id: GAP-001\n"
+        "severity: high\n"
+        "---\n"
+        "```\n",
+        encoding="utf-8",
+    )
+
+    gaps = gap_dir / "gaps.md"
+    gaps.write_text(
+        "---\n"
+        "phase: 02-gap\n"
+        "status: draft\n"
+        "harness_version: 0.1.0\n"
+        "template: gaps@1.0.0\n"
+        "---\n"
+        "[inferred] [source:from: GAP-001] [conf:M]\n",
+        encoding="utf-8",
+    )
+    violations = claim_composition_resolvable.check(gaps)
+    assert len(violations) == 1
+    assert "GAP-001" in violations[0].message
