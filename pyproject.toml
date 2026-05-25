@@ -13,4 +13,4 @@ ignore_missing_imports = true
 exclude = ["mcp/"]
 
 [tool.pytest.ini_options]
-testpaths = ["harness/tests", "validator/tests", "mcp/portfolio-mcp/tests"]
+testpaths = ["harness/tests", "validator/tests", "mcp/portfolio-mcp/tests", "mcp/customer-mcp/tests"]
