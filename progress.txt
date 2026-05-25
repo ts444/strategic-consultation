@@ -40,3 +40,20 @@
   - `_contradictions.md` Status field capitalised by convention (machine-parseable by validator)
   - `_decisions.md` overrides field is the machine-readable hook for claim_composition_resolvable.py
 ---
+
+## 2026-05-25 - US-004
+- Implemented `templates/scope.template.md` (phase 00-intake), `templates/situation.template.md` (phase 01-situation), `templates/gaps.template.md` (phase 02-gap)
+- Each has YAML frontmatter: phase, status (draft|ratified), harness_version, template (name@version), ratified_by, ratified_at, produced_by
+- Each embeds phase exit criteria as a comment block (grounded in Q7 phase contracts and design-principles §3)
+- scope.template.md: sections for customer overview, goals table, constraints (budget/compliance/contractual/skills/political), stakeholders, out-of-scope, assumptions, open questions, HITL confirmation record
+- situation.template.md: entry condition check, current tech landscape, org context, key facts (retrieved, SIT-NNN ids), key elicitations (SIT-NNN ids), synthesis sections, compliance posture table, contradictions mirror, risks, HITL record
+- gaps.template.md: goal coverage map table (every scope goal must appear), two worked YAML gap blocks (one with compliance_drivers list, one with []), no-gap table (§3), compliance coverage summary, contradictions mirror, HITL record
+- COMPLIANCE_DRIVERS rule stated explicitly in exit criteria, in block comment, and enforced via both worked examples; references gap_compliance_drivers_field.py validator rule
+- All three templates reference `templates/_claim.schema.md` by name in comment header
+- Files changed: templates/scope.template.md, templates/situation.template.md, templates/gaps.template.md (all created)
+- **Learnings for future iterations:**
+  - Template frontmatter includes `produced_by` field — this is the machine-readable hook for label_producer_binding.py validator rule
+  - Exit criteria comment blocks reference both design-principles section numbers AND Q7 decision slugs — keeps templates grounded in canonical docs
+  - gaps.template.md uses a goal-coverage-map table (§1) as the structural contract for the "every goal mapped" exit criterion — the orchestrator prompt should check this table
+  - SIT-NNN ids thread from situation.template.md into gaps.template.md `evidence` fields — preserving that numbering sequence across phases matters
+---
