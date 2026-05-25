@@ -13,7 +13,10 @@ from validator.rules import (
     claim_source_present,
     confidence_propagation,
     frontmatter_required_fields,
+    gap_compliance_drivers_field,
     label_producer_binding,
+    recommendation_required_fields,
+    roadmap_item_required_fields,
     template_conformance,
 )
 
@@ -25,6 +28,9 @@ _CHECKERS: list[tuple[str, Callable[[Path], list[Violation]]]] = [
     (label_producer_binding.RULE, label_producer_binding.check),
     (confidence_propagation.RULE, confidence_propagation.check),
     (template_conformance.RULE, template_conformance.check),
+    (gap_compliance_drivers_field.RULE, gap_compliance_drivers_field.check),
+    (recommendation_required_fields.RULE, recommendation_required_fields.check),
+    (roadmap_item_required_fields.RULE, roadmap_item_required_fields.check),
 ]
 
 

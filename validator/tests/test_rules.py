@@ -542,3 +542,343 @@ def test_template_conformance_skips_unknown_template(tmp_path: Path) -> None:
     )
     f = _artifact(tmp_path, "# Content\n", frontmatter=fm)
     assert template_conformance.check(f) == []
+
+
+# ---------------------------------------------------------------------------
+# gap_compliance_drivers_field
+# ---------------------------------------------------------------------------
+
+from validator.rules import (  # noqa: E402
+    gap_compliance_drivers_field,
+    recommendation_required_fields,
+    roadmap_item_required_fields,
+)
+
+_GAP_BLOCK_WITH_DRIVERS = (
+    "```yaml\n"
+    "---\n"
+    "id: GAP-001\n"
+    "compliance_drivers:\n"
+    "  - CMP-001\n"
+    "severity: high\n"
+    "---\n"
+    "```\n"
+)
+
+_GAP_BLOCK_EMPTY_DRIVERS = (
+    "```yaml\n"
+    "---\n"
+    "id: GAP-001\n"
+    "compliance_drivers: []\n"
+    "severity: high\n"
+    "---\n"
+    "```\n"
+)
+
+_GAP_BLOCK_NO_DRIVERS = (
+    "```yaml\n"
+    "---\n"
+    "id: GAP-001\n"
+    "severity: high\n"
+    "---\n"
+    "```\n"
+)
+
+
+def test_gap_compliance_drivers_pass_empty_list(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _GAP_BLOCK_EMPTY_DRIVERS)
+    assert gap_compliance_drivers_field.check(f) == []
+
+
+def test_gap_compliance_drivers_pass_no_register(tmp_path: Path) -> None:
+    # CMP ref present but no _compliance.md → skip reference check
+    f = _artifact(tmp_path, _GAP_BLOCK_WITH_DRIVERS)
+    assert gap_compliance_drivers_field.check(f) == []
+
+
+def test_gap_compliance_drivers_pass_valid_ref(tmp_path: Path) -> None:
+    compliance = tmp_path / "_compliance.md"
+    compliance.write_text("```yaml\n---\nid: CMP-001\n---\n```\n", encoding="utf-8")
+    f = _artifact(tmp_path, _GAP_BLOCK_WITH_DRIVERS)
+    assert gap_compliance_drivers_field.check(f) == []
+
+
+def test_gap_compliance_drivers_fail_missing_field(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _GAP_BLOCK_NO_DRIVERS)
+    violations = gap_compliance_drivers_field.check(f)
+    assert len(violations) == 1
+    assert violations[0].rule == "gap_compliance_drivers_field"
+    assert "GAP-001" in violations[0].message
+    assert "compliance_drivers" in violations[0].message
+
+
+def test_gap_compliance_drivers_fail_broken_ref(tmp_path: Path) -> None:
+    compliance = tmp_path / "_compliance.md"
+    compliance.write_text("```yaml\n---\nid: CMP-002\n---\n```\n", encoding="utf-8")
+    f = _artifact(tmp_path, _GAP_BLOCK_WITH_DRIVERS)
+    violations = gap_compliance_drivers_field.check(f)
+    assert len(violations) == 1
+    assert "CMP-001" in violations[0].message
+
+
+def test_gap_compliance_drivers_ignores_non_gap_blocks(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: REC-001\n"
+        "severity: high\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    assert gap_compliance_drivers_field.check(f) == []
+
+
+# ---------------------------------------------------------------------------
+# recommendation_required_fields
+# ---------------------------------------------------------------------------
+
+_REC_FULL_BLOCK = (
+    "```yaml\n"
+    "---\n"
+    "id: REC-001\n"
+    "addresses:\n"
+    "  - GAP-001\n"
+    "proposed_service: SomeService\n"
+    "compliance_relation: addresses\n"
+    "cost: tbc\n"
+    "lock_in: none\n"
+    "opportunity_cost: none\n"
+    "---\n"
+    "```\n"
+)
+
+_REC_MISSING_COST = (
+    "```yaml\n"
+    "---\n"
+    "id: REC-001\n"
+    "compliance_relation: addresses\n"
+    "lock_in: none\n"
+    "opportunity_cost: none\n"
+    "---\n"
+    "```\n"
+)
+
+
+def test_rec_required_fields_pass(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _REC_FULL_BLOCK)
+    assert recommendation_required_fields.check(f) == []
+
+
+def test_rec_required_fields_pass_none_values(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: REC-002\n"
+        "compliance_relation: irrelevant\n"
+        "cost: tbc\n"
+        "lock_in: none\n"
+        "opportunity_cost: none\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    assert recommendation_required_fields.check(f) == []
+
+
+def test_rec_required_fields_fail_missing_cost(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _REC_MISSING_COST)
+    violations = recommendation_required_fields.check(f)
+    assert len(violations) == 1
+    assert violations[0].rule == "recommendation_required_fields"
+    assert "cost" in violations[0].message
+    assert "REC-001" in violations[0].message
+
+
+def test_rec_required_fields_fail_multiple_missing(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: REC-003\n"
+        "proposed_service: SomeService\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    violations = recommendation_required_fields.check(f)
+    assert len(violations) == 4  # all four missing
+
+
+def test_rec_required_fields_ignores_non_rec_blocks(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: GAP-001\n"
+        "severity: high\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    assert recommendation_required_fields.check(f) == []
+
+
+# ---------------------------------------------------------------------------
+# roadmap_item_required_fields
+# ---------------------------------------------------------------------------
+
+_RMI_FULL_BLOCK = (
+    "```yaml\n"
+    "---\n"
+    "id: RMI-001\n"
+    "year: Y1\n"
+    "quick_win: true\n"
+    "compliance_role: deadline\n"
+    "compliance_deadline: 2026-12-31\n"
+    "budget_envelope: BUD-001\n"
+    "---\n"
+    "```\n"
+)
+
+_RMI_NON_DEADLINE = (
+    "```yaml\n"
+    "---\n"
+    "id: RMI-001\n"
+    "year: Y1\n"
+    "quick_win: true\n"
+    "compliance_role: constraint\n"
+    "budget_envelope: BUD-001\n"
+    "---\n"
+    "```\n"
+)
+
+
+def test_rmi_required_fields_pass_deadline(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _RMI_FULL_BLOCK)
+    assert roadmap_item_required_fields.check(f) == []
+
+
+def test_rmi_required_fields_pass_non_deadline(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _RMI_NON_DEADLINE)
+    assert roadmap_item_required_fields.check(f) == []
+
+
+def test_rmi_required_fields_fail_missing_compliance_role(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: RMI-001\n"
+        "year: Y1\n"
+        "quick_win: true\n"
+        "budget_envelope: BUD-001\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    violations = roadmap_item_required_fields.check(f)
+    rule_violations = [v for v in violations if "compliance_role" in v.message]
+    assert len(rule_violations) == 1
+    assert violations[0].rule == "roadmap_item_required_fields"
+
+
+def test_rmi_required_fields_fail_deadline_missing_date(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: RMI-001\n"
+        "year: Y1\n"
+        "quick_win: true\n"
+        "compliance_role: deadline\n"
+        "budget_envelope: BUD-001\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    violations = roadmap_item_required_fields.check(f)
+    date_violations = [
+        v for v in violations if "compliance_deadline" in v.message and "requires" in v.message
+    ]
+    assert len(date_violations) == 1
+
+
+def test_rmi_required_fields_fail_non_deadline_has_date(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: RMI-001\n"
+        "year: Y1\n"
+        "quick_win: true\n"
+        "compliance_role: none\n"
+        "compliance_deadline: 2026-12-31\n"
+        "budget_envelope: BUD-001\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    violations = roadmap_item_required_fields.check(f)
+    date_violations = [
+        v for v in violations if "compliance_deadline" in v.message and "absent" in v.message
+    ]
+    assert len(date_violations) == 1
+
+
+def test_rmi_required_fields_fail_missing_budget_envelope(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: RMI-001\n"
+        "year: Y1\n"
+        "quick_win: true\n"
+        "compliance_role: none\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    violations = roadmap_item_required_fields.check(f)
+    bud_violations = [
+        v for v in violations if "budget_envelope" in v.message and "missing" in v.message
+    ]
+    assert len(bud_violations) == 1
+
+
+def test_rmi_required_fields_fail_broken_bud_ref(tmp_path: Path) -> None:
+    budget = tmp_path / "_budget.md"
+    budget.write_text("```yaml\n---\nid: BUD-002\n---\n```\n", encoding="utf-8")
+    f = _artifact(tmp_path, _RMI_FULL_BLOCK)
+    violations = roadmap_item_required_fields.check(f)
+    bud_violations = [v for v in violations if "BUD-001" in v.message]
+    assert len(bud_violations) == 1
+
+
+def test_rmi_required_fields_pass_valid_bud_ref(tmp_path: Path) -> None:
+    budget = tmp_path / "_budget.md"
+    budget.write_text("```yaml\n---\nid: BUD-001\n---\n```\n", encoding="utf-8")
+    f = _artifact(tmp_path, _RMI_FULL_BLOCK)
+    assert roadmap_item_required_fields.check(f) == []
+
+
+def test_rmi_required_fields_fail_no_y1_quick_win(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: RMI-001\n"
+        "year: Y1\n"
+        "quick_win: false\n"
+        "compliance_role: none\n"
+        "budget_envelope: BUD-001\n"
+        "---\n"
+        "```\n"
+        "```yaml\n"
+        "---\n"
+        "id: RMI-002\n"
+        "year: Y2\n"
+        "quick_win: false\n"
+        "compliance_role: none\n"
+        "budget_envelope: BUD-001\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    violations = roadmap_item_required_fields.check(f)
+    qw_violations = [v for v in violations if "quick_win" in v.message]
+    assert len(qw_violations) == 1
+    assert qw_violations[0].line is None  # file-level violation
