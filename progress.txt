@@ -1,3 +1,16 @@
+## 2026-05-25 - US-016
+- Implemented `harness/explain.py` — `explain_claim(repo, claim_id)` walks the composed-claim graph via `from: A + B` recursively; returns `ExplainResult(root, decisions, chain_ids)`; tree nodes are `ExplainNode(claim, children, missing, is_cycle)`; leaf facts are [known]/[elicited] claims with no `composed_from`; cycles detected with a `frozenset` of visited IDs passed down each recursion path; diamond DAGs (same claim reachable via multiple paths) are correctly distinguished from cycles since `frozenset` is path-local
+- `_parse_decisions_text(text, artifact)` parses `_decisions.md` YAML blocks (same fence+block pattern as decay_check.py); supports both `overrides: SINGLE-ID` and `overrides:` list styles; `_load_decisions(repo)` wraps file loading
+- `format_result(result)` renders the tree with 2-space indentation showing `claim_id [label] conf:X`, `source: ...`, `at: phase_dir/file.md:lineno`; appends "Decisions overriding claims in this chain:" section when decisions are found
+- CLI: `explain <engagement-repo> <claim-id>`; exits 1 on missing claim or bad path
+- Added 27 tests in `harness/tests/test_explain.py`; 175 total pass (1 skipped); ruff + mypy clean
+- Files changed: harness/explain.py, harness/tests/test_explain.py
+- **Learnings for future iterations:**
+  - `_extract_claims` in `decay_check.py` uses `current_block_id` (set from `id:` inside a YAML fence) for claim atoms on subsequent lines in the same block; test fixtures must place the claim line AFTER the `id:` field inside the `---...---` block
+  - Diamond DAGs (claim reachable via two paths) require `frozenset` passed by value per recursion branch — using a mutable set would cause false cycle detection on the second path
+  - `harness/explain.py` imports private helpers from `decay_check.py` (`_PHASE_DIRS`, `_extract_claims`, `Claim`) — acceptable for intra-package use; no circular dependencies
+---
+
 ## 2026-05-25 - US-015
 - Implemented `harness/decay_check.py` — `run_decay_check(engagement_repo, ...)` with four decay types: (1) HARD STALE: `[known]` claims re-checked via injectable `head_portfolio(source_name)` and `head_customer(resource_type, id)` callables; flags when ref/updated_at differs; silently appends to `_trace.jsonl` when unchanged; (2) ELICITED DUE FOR REVALIDATION: `[elicited]` claims whose phase-distance ≥ threshold (H=3, M=2, L=1, configurable via `elicited_thresholds` param); (3) ASSUMPTIONS FLAGGED: parses `_assumptions.md` YAML blocks, flags entries with `requires_revalidation: true` where `current_phase > phase_expires`; (4) DOWNSTREAM IMPACT: `[inferred]/[assumed]` claims composed via `from: A + B` that reference stale claim IDs
 - `harness/decay_check.py` CLI: `decay_check <engagement-repo> [--current-phase N] [--skip-known]`; auto-detects current phase from highest ratified artifact; exits non-zero on any stale finding; grouped output per section
