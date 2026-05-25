@@ -1,3 +1,19 @@
+## 2026-05-25 - US-020
+- Implemented `prompts/subagents/synthesizer.md` — stateless synthesizer subagent; model Opus (never Haiku/Sonnet); no tool access
+- Emits [inferred] and [assumed] labels only; [known] and [elicited] are strictly forbidden
+- Every [inferred] claim must carry `from: A + B` source notation referencing in-scope claim ids; the validator and `harness explain` depend on this chain
+- Confidence-propagation rule mandated: conf(composed) ≤ min(input confs); assigning H to M/L-derived claims is a validator error
+- [assumed] claims require corresponding `_assumptions.md` entries with `requires_revalidation: true` and `phase_expires`
+- Draft artifacts produced with `status: draft` frontmatter; `produced_by: synthesizer` set; ratification is a HITL gate
+- Contradiction handling: emits [SYNTHESIZER-CONFLICT] annotation and flags for orchestrator; does not silently choose between contradicting inputs
+- No new code; prompt markdown only; all 175 tests still pass; ruff + mypy clean
+- Files changed: prompts/subagents/synthesizer.md
+- **Learnings for future iterations:**
+  - Synthesizer is stateless (unlike the interviewer) — it receives all inputs in context and produces one complete draft per call
+  - `[assumed]` claims must always have a corresponding `_assumptions.md` entry; the decay_check tool depends on this register being populated
+  - Contradiction handling is two-step: synthesizer flags conflicts, orchestrator resolves before requesting a second synthesis pass — synthesizer never resolves contradictions unilaterally
+---
+
 ## 2026-05-25 - US-019
 - Implemented `prompts/subagents/interviewer.md` — long-lived interviewer subagent; model Opus (never Haiku/Sonnet); no tool access (chat only)
 - Stamps every captured fact as [elicited] with `interview:<ISO8601-date>/consultant` source; forbidden from emitting [known], [inferred], or [assumed]
