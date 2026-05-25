@@ -10,6 +10,7 @@ ignore = []
 python_version = "3.10"
 strict = true
 ignore_missing_imports = true
+exclude = ["mcp/"]
 
 [tool.pytest.ini_options]
-testpaths = ["harness/tests", "validator/tests"]
+testpaths = ["harness/tests", "validator/tests", "mcp/portfolio-mcp/tests"]
