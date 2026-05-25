@@ -1,3 +1,20 @@
+## 2026-05-25 - US-019
+- Implemented `prompts/subagents/interviewer.md` — long-lived interviewer subagent; model Opus (never Haiku/Sonnet); no tool access (chat only)
+- Stamps every captured fact as [elicited] with `interview:<ISO8601-date>/consultant` source; forbidden from emitting [known], [inferred], or [assumed]
+- Periodic in-scope self-check every 8 turns (internal, not narrated to user); steers toward uncovered elicitation goals after each check
+- Soft-bounded with [INTERVIEWER-SIGNAL] at turns 20/30/40 for orchestrator to surface "pause and synthesize?" to consultant
+- Dismissal triggers: all goals covered, explicit orchestrator dismissal, or turn 40 reached
+- Structured final output: sequential E-NNN claim blocks (one fact per block, confidence from interlocutor language), open questions (OQ-NNN), retriever flags for claims citing external sources
+- One-question-at-a-time rule enforced; no synthesis; scope discipline (later-phase material noted as open questions)
+- No new code; prompt markdown only; all 175 tests still pass; ruff + mypy clean
+- Files changed: prompts/subagents/interviewer.md
+- **Learnings for future iterations:**
+  - Interviewer is long-lived (stateful within a phase) unlike retrievers which are stateless; this distinction matters for orchestrator prompt design
+  - Turn-count signals ([INTERVIEWER-SIGNAL]) are emitted as the first line of the response so the orchestrator can parse them without breaking conversation flow
+  - Confidence calibration is based on interlocutor's language hedging (H=certain, M=hedging, L=speculative) — not importance or completeness
+  - Retriever flags are non-binding hints, not claims; they carry no label and do not require source URIs
+---
+
 ## 2026-05-25 - US-018
 - Implemented `prompts/subagents/portfolio-retriever.md` — read-only portfolio MCP retriever; emits [known] only; source URI format `portfolio://<domain>/<file>.md@<sha-or-mtime>`; confidence always H; stateless; no synthesis; model Sonnet
 - Implemented `prompts/subagents/customer-data-retriever.md` — read-only customer MCP retriever; emits [known] only; source URI format `customer-portal://<resource>/<id>@<updated_at>`; confidence always H; stateless; no synthesis; model Sonnet; scope-isolated per customer_id
