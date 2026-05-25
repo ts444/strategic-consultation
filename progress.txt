@@ -1,3 +1,20 @@
+## 2026-05-25 - US-013
+- Added `updatedAt DateTime @updatedAt @default(now())` to `Asset` and `ContractedService` in `prisma/schema.prisma`; applied via `prisma db push` (no migrations dir — portal uses db push workflow)
+- Created `lib/prisma-readonly.ts` — PrismaClient using `READONLY_DATABASE_URL` env var (falls back to `DATABASE_URL` if not set) for read-only query isolation
+- Created `lib/api-auth.ts` — `checkBearerToken()` helper validates `Authorization: Bearer <API_BEARER_TOKEN>` header
+- Created `app/api/customers/[id]/assets/route.ts`, `contracts/route.ts`, `compliance-posture/route.ts` — three GET endpoints; all check bearer token and return 401/404 appropriately; all include `updatedAt` on each resource
+- `compliance-posture` derives a domain-grouped view from contracted services (no separate DB model)
+- Created `scripts/smoke-test-api.sh` — curl-based smoke test; 13/13 checks pass against live DB for Apex Retail, Meridian Logistics, Cornerstone Finance
+- `tsc --noEmit` clean; no existing tests broken (portal has no test files outside node_modules)
+- Files changed: `prisma/schema.prisma`, `lib/prisma-readonly.ts`, `lib/api-auth.ts`, `app/api/customers/[id]/assets/route.ts`, `app/api/customers/[id]/contracts/route.ts`, `app/api/customers/[id]/compliance-posture/route.ts`, `scripts/smoke-test-api.sh`
+- **Learnings for future iterations:**
+  - `customer-portal` uses `prisma db push` (no migrations dir); schema changes go through `prisma db push --accept-data-loss`
+  - `API_BEARER_TOKEN` must be in `.env.local` (gitignored) for Next.js to pick it up; not inherited from shell env of background processes
+  - Next.js dev may bind to a different port if 3000 is in use; check `/tmp/next-dev.log` for actual port
+  - Three seeded org ids: `org-apex` (Apex Retail, small), `org-meridian` (Meridian Logistics, medium), `org-cornerstone` (Cornerstone Finance, large)
+  - `READONLY_DATABASE_URL` env var is the hook for a separate read-only Postgres role; during dev it falls back to `DATABASE_URL`
+---
+
 ## 2026-05-25 - US-012
 - Implemented `mcp/portfolio-mcp/server.py` — five read-only tools: `list_domains()`, `list_services_in_domain(domain)`, `read_service(name)`, `search_services(query, max_hits=10)`, `head(name)`; every response embeds `portfolio://<domain>/<file>.md@<ref>` source URI (git sha if portfolio is git repo, else mtime); `search_services` returns snippets with citations, never raw file content
 - Implemented `mcp/portfolio-mcp/__main__.py` — minimal MCP JSON-RPC 2.0 stdio server handling `initialize`, `tools/list`, `tools/call`; no write tools exposed
