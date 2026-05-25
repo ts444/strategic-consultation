@@ -1,3 +1,14 @@
+## 2026-05-25 - US-027
+- harness/enter_phase.py already existed with full implementation (phase detection, version mismatch handling, trace appending, claude invocation)
+- Added harness/tests/test_enter_phase.py with 33 unit tests covering all acceptance criteria
+- Tests cover: _is_ratified (missing/draft/ratified/no-frontmatter), _detect_next_phase (empty/partial/full/draft), _read_engagement_version (present/missing/no-field), _resolve_phase (auto/numeric/full-name/unknown), _upgrade_engagement_version, _handle_version_mismatch (pin/upgrade/abort/non-interactive), _append_trace (creates/append-only/missing-prompt), main() dry-run (auto-detect/specific-phase/all-done/version-mismatch/missing-repo/unknown-phase/rerun)
+- Files changed: harness/tests/test_enter_phase.py (new)
+- **Learnings for future iterations:**
+  - enter_phase.py uses `--dry-run` (not `non_interactive`) to skip actual claude invocation; the non_interactive parameter on _handle_version_mismatch is set from dry_run flag — useful to remember for version-mismatch test patterns
+  - Phase artifact mapping is in _PHASE_ARTIFACT dict; adding new phases requires updating both _PHASE_DIRS and _PHASE_ARTIFACT
+  - Ruff E741 fires on single-letter loop variables (`l`); use `ln` or full word
+---
+
 ## 2026-05-25 - US-026
 - Implemented `prompts/orchestrator/06-retro.md` — seven-step orchestrator loop for phase 06-retro
 - Entry condition: `05-handover/handover.md` must have `status: ratified`; halts immediately if not
