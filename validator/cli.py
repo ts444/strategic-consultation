@@ -6,7 +6,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from validator import Violation
+from validator import Violation, Warning
 from validator.rules import (
     claim_composition_resolvable,
     claim_confidence_present,
@@ -20,7 +20,12 @@ from validator.rules import (
     recommendation_required_fields,
     roadmap_item_required_fields,
     template_conformance,
+    trace_populated,
 )
+
+_WARN_CHECKERS: list[tuple[str, Callable[[Path], list[Warning]]]] = [
+    (trace_populated.RULE, trace_populated.check),
+]
 
 _CHECKERS: list[tuple[str, Callable[[Path], list[Violation]]]] = [
     (claim_label_present.RULE, claim_label_present.check),
@@ -47,6 +52,15 @@ def _run_rules(path: Path) -> dict[str, list[Violation]]:
     return results
 
 
+def _run_warn_rules(path: Path) -> dict[str, list[Warning]]:
+    results: dict[str, list[Warning]] = {}
+    for rule_name, check_fn in _WARN_CHECKERS:
+        warnings = check_fn(path)
+        if warnings:
+            results[rule_name] = warnings
+    return results
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate a phase artifact.")
     parser.add_argument("artifact", type=Path, help="Path to the artifact file")
@@ -56,6 +70,12 @@ def main(argv: list[str] | None = None) -> int:
     if not path.exists():
         print(f"error: file not found: {path}", file=sys.stderr)
         return 1
+
+    warn_results = _run_warn_rules(path)
+    for rule_name, warnings in sorted(warn_results.items()):
+        print(f"\n[WARN:{rule_name}]")
+        for w in warnings:
+            print(f"  warning: {w.message}")
 
     results = _run_rules(path)
     if not results:
