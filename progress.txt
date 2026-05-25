@@ -1,3 +1,18 @@
+## 2026-05-25 - US-009
+- Implemented `validator/rules/label_producer_binding.py` — reads `produced_by` frontmatter, rejects claims with labels not in the producer's allowed set (synthesizer→inferred/assumed; portfolio-retriever/customer-data-retriever→known; interviewer→elicited). Skips unknown producers.
+- Implemented `validator/rules/confidence_propagation.py` — parses `\`\`\`yaml` fences in document body, builds `{block_id.field_name → conf}` map, then rejects composed claims (`from: A + B`) whose conf exceeds min(input confs). Skips when input confs can't be resolved.
+- Implemented `validator/rules/template_conformance.py` — reads `template:` frontmatter, strips version suffix, checks required H2 sections exist in body. Covers: roadmap→`## Sequencing argument`, gaps→`## 1. Goal Coverage Map`.
+- Added `frontmatter_value(text, key) -> str | None` helper to `validator/_util.py`
+- Updated `validator/cli.py` to run all 7 rules
+- Added 16 new tests across the three rules (40 total pass)
+- Files changed: validator/_util.py, validator/rules/label_producer_binding.py, validator/rules/confidence_propagation.py, validator/rules/template_conformance.py, validator/cli.py, validator/tests/test_rules.py
+- **Learnings for future iterations:**
+  - `confidence_propagation.py` only fires when input confs are resolvable in the document — it skips silently for cross-artifact refs (e.g. `portfolio://...` URIs in `from:`) to avoid false positives
+  - The YAML block parser in `confidence_propagation.py` tracks `in_fence` (inside ` \`\`\`yaml `) and `in_block` (inside `---...---`) separately — both must be true to extract field confs
+  - `template_conformance.py`'s `REQUIRED_H2` dict is the authoritative list of template→required-sections; add new templates here as they get defined
+  - `frontmatter_value()` in `_util.py` is now the canonical way to read a single frontmatter field value — use it in all new rules that need frontmatter fields beyond the key set
+---
+
 ## Codebase Patterns
 - Python package root is `/home/tim/strategic-consultation/`; run pytest/ruff/mypy from there
 - `harness/` is a Python package (has `__init__.py`); tests live in `harness/tests/`
