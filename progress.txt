@@ -75,3 +75,17 @@
   - quick_win boolean must appear on every roadmap item; validator checks for >=1 Y1 item with quick_win: true
   - service-map.template.md and recommendations.template.md are companion artifacts in the same phase (03-mapping); both must be ratified before entering phase 04
 ---
+
+## 2026-05-25 - US-006
+- Implemented `templates/handover.template.md` (phase 05-handover, customer-facing bundle)
+- Implemented `templates/retro.template.md` (phase 06-retro, engagement learning + change requests)
+- handover.template.md: YAML frontmatter (phase, status, harness_version, template@version, ratified_by, ratified_at, produced_by); exit criteria with explicit MSP PORTAL HYGIENE EXCLUSION comment; sections for Executive Narrative (customer-facing tone, no meta-findings), Roadmap Summary (table by year), Decision Log (DEC-NNN ids + overrides pointers verbatim), Assumption Register (with requires_revalidation flag), Risk Log (with status), Contradictions mirror, HITL record
+- retro.template.md: YAML frontmatter consistent with prior templates; exit criteria encoding CHANGE-REQUEST DESTINATION rule (harness repo, not engagement repo); sections for What Worked, What Failed, What Surprised; Data-Quality Meta-Findings with mandatory §4.1 contradiction statistics table + §4.2 MSP portfolio observations + §4.3 customer-portal observations; Change Requests section with CR-YYYY-NNN file naming, no-anonymisation rule, and harness-repo destination; HITL record
+- Files changed: templates/handover.template.md (created), templates/retro.template.md (created)
+- **Learnings for future iterations:**
+  - handover.template.md MSP portal hygiene exclusion is enforced by a named comment block — the orchestrator prompt for phase 05 should reference this rule explicitly to avoid synthesizer drift
+  - retro.template.md change requests must be written as separate files in the harness repo's backlog/change-requests/; the engagement repo ratification commit and the harness CR commit must be distinct git commits
+  - CR files must name the originating customer directly (design-principles requirement, no anonymisation) — the retro template and CR frontmatter both state this
+  - §4.1 contradiction stats table is mandatory in retro.template.md — the orchestrator should populate it by querying _contradictions.md at phase entry, not from memory
+  - handover.template.md reproduces (not references) all three registers (decisions, assumptions, risks) verbatim from _decisions.md, _assumptions.md, _risks.md so the customer-facing bundle is self-contained
+---
