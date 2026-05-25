@@ -1,3 +1,22 @@
+## 2026-05-25 - US-028
+- Implemented `harness/check_contradictions.py` — contradiction detection, register writing, and phase-blocking
+- Detection: subject+predicate overlap (≥2 shared content words from first 2 key-words) with opposite polarity (one claim has negation word, other does not)
+- Collision classification: hard<->hard (known+elicited), hard<->soft (mixed), soft<->soft (inferred+assumed)
+- `_parse_contradictions_register()` parses `_contradictions.md` YAML fence blocks into ContradictionEntry objects
+- `_write_new_contradictions()` appends CON-NNN blocks to register (creates file if absent)
+- `_blocking_entries()` returns unresolved entries whose Blocks list includes the requested phase
+- `resolve_contradiction()` implements paths (a) source-update, (b) supersession, (c) assumption, (d) decision — rewrites Status/Blocks/resolution fields in-place
+- `run_check_contradictions()` orchestrates full flow: parse existing, collect in-scope claims, detect new, optionally write, return blocking list
+- CLI main() with `--phase NN` and `--no-write` flags; exit 0=clean, 1=blocked, 2=error
+- 51 unit tests in harness/tests/test_check_contradictions.py — all 259 tests pass; ruff + mypy clean
+- Files changed: harness/check_contradictions.py (new), harness/tests/test_check_contradictions.py (new)
+- **Learnings for future iterations:**
+  - Subject+predicate matching uses first 2 key-words (non-stopword, non-negation) as subject proxy; overlap ≥2 required — this threshold prevents false-positives from single shared words like "system" or "service"
+  - Supersession (supersedes: <claim-id>) excludes the superseded claim from detection entirely (its id goes into `superseded_ids` set); this is correct per schema — supersessions are not contradictions
+  - `resolve_contradiction()` does a line-by-line rewrite of the register — preserves formatting but depends on canonical field names (Status:, Blocks:, etc.) matching exactly
+  - `_blocking_entries()` only fires on `status == "unresolved"` and non-empty Blocks containing the phase dir name (e.g. "01-situation") — not numeric phase id
+---
+
 ## 2026-05-25 - US-027
 - harness/enter_phase.py already existed with full implementation (phase detection, version mismatch handling, trace appending, claude invocation)
 - Added harness/tests/test_enter_phase.py with 33 unit tests covering all acceptance criteria
