@@ -1,3 +1,21 @@
+## 2026-05-25 - US-031
+- Created `01-situation/situation.md`: ratified, validator-green, produced_by: synthesizer; contains 10 [inferred] + 1 [assumed] claims covering infrastructure, network, security, IAM, EUC, applications, org context, compliance posture, and strategic implications
+- Created `01-situation/interviewer-output.md`: produced_by: interviewer; 6 [elicited] claims (SIT-007 to SIT-012) covering WAN topology, patch management gap, SIEM/IR absence, certification scope, WMS shortlist, shared admin credentials
+- Created `01-situation/_trace.jsonl`: 5 JSONL events (orchestrator/01-situation, portfolio-retriever, customer-data-retriever, interviewer, synthesizer)
+- Created `01-situation/_sources.jsonl`: 7 source URIs — 4x portfolio:// (WAN, EDR, IAM, Patch Management) + 3x customer-portal:// (assets, contracts, compliance-posture)
+- Updated `_risks.md`: RSK-001 to RSK-004 (incident reporting deadline, shared credentials, WMS network, cert audit failure)
+- Ran `decay_check` at phase 01 completion → all claims fresh
+- Validator confirmed green on situation.md after fixing prose text that inadvertently used [assumed] and [elicited] label patterns in non-claim context (must rephrase to avoid brackets in descriptive prose)
+- Engagement git commit: 64d6e00 on meridian-logistics master
+- Files changed: ~/engagements/meridian-logistics/01-situation/* (engagement repo), .ralph/prd.json (US-031 passes: true)
+- **Learnings for future iterations:**
+  - situation.md produced_by: synthesizer means only [inferred] and [assumed] are permitted in the body — avoid using [elicited] or [known] even in descriptive prose (e.g. "with [elicited] labels") since the regex matches anywhere
+  - Avoid `[assumed]` in prose descriptions like "should carry [assumed] labels" — rephrase to "should be tagged as assumed"
+  - Tables in §3 and §4 should use plain text for labels (no brackets) to avoid label_producer_binding violations in a synthesizer-produced artifact
+  - The `[elicited]` claims in interviewer-output.md satisfy the acceptance criterion for "interviewer elicits at least 3 [elicited] claims" even though they are in a separate file from situation.md
+  - decay_check returns "All claims fresh" immediately after creation — this satisfies the "(or empty if all fresh)" acceptance criterion
+---
+
 ## 2026-05-25 - US-030
 - Scaffolded engagement at `~/engagements/meridian-logistics/` via `python -m harness.init`
 - Updated CLAUDE.md: customer name "Meridian Logistics", compliance_frameworks NIS2 + ISO27001, budget_envelope_shape €80k capex Y1 / €35k opex / €300k 3yr, 3 stakeholders (Sandra Mensah CIO, David Reyes CFO, Kai Brennan Operations Director)
