@@ -1,3 +1,18 @@
+## 2026-05-25 - US-033
+- Created `04-roadmap/roadmap.md`: ratified, validator-green, produced_by: synthesizer; 9 RMI blocks with H2 sequencing argument; 2 Y1 quick-wins (RMI-001 EDR Q2 2026, RMI-002 Patch Management Q2 2026); all Y1 items trace to >=1 GAP-id; all compliance items categorised (deadline/enabler/irrelevant); no-portfolio gaps flagged for retro (RMI-004 SIEM, RMI-006 ISMS)
+- Created `05-handover/handover.md`: ratified, validator-green, produced_by: synthesizer; bundles all 5 components (executive narrative, roadmap summary, decisions, assumptions, risks); no meta-findings about portal hygiene
+- Created trace + sources JSONL for phases 04 and 05
+- Engagement git commit: 54ee408 on meridian-logistics master
+- Files changed: ~/engagements/meridian-logistics/04-roadmap/*, 05-handover/* (engagement repo), .ralph/prd.json (US-033 passes: true)
+- **Learnings for future iterations:**
+  - roadmap template requires `## Sequencing argument` H2 section (template_conformance rule checks for this)
+  - RMI block `compliance_deadline` field must be present when `compliance_role: deadline`, and must be absent for all other roles (constraint/enabler/irrelevant)
+  - RMI block `budget_envelope` must reference a declared BUD-NNN id from _budget.md
+  - File-level: at least one RMI block must have `year: Y1` AND `quick_win: true` — roadmap_item_required_fields enforces this
+  - framework_name_in_structured_fields fires on inline title/proposed_service fields — avoid bare framework names in RMI `title:` values; use CMP-NNN references instead (e.g. "CMP-003" not "ISO27001")
+  - handover.md has no dedicated validator rules beyond frontmatter_required_fields, claim_label_present, etc. — the 5-component structure is a prose/content requirement, not a schema rule
+---
+
 ## 2026-05-25 - US-032
 - Created `02-gap/gaps.md`: ratified, validator-green, produced_by: synthesizer; 5 gap blocks (GAP-001 critical SIEM/IR absence, GAP-002 critical patch management, GAP-003 high WAN capacity, GAP-004 high IAM/PAM, GAP-005 high ISMS programme) — all 3 goals covered
 - Created CON-001: hard<->soft contradiction between GAP-002 inference (replace OfficeScan for compliance) and ASM-004 (maintain AV to contract end 2027-01-31); resolved via path d (DEC-001)
