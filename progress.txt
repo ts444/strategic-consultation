@@ -1,3 +1,21 @@
+## 2026-05-25 - US-032
+- Created `02-gap/gaps.md`: ratified, validator-green, produced_by: synthesizer; 5 gap blocks (GAP-001 critical SIEM/IR absence, GAP-002 critical patch management, GAP-003 high WAN capacity, GAP-004 high IAM/PAM, GAP-005 high ISMS programme) — all 3 goals covered
+- Created CON-001: hard<->soft contradiction between GAP-002 inference (replace OfficeScan for compliance) and ASM-004 (maintain AV to contract end 2027-01-31); resolved via path d (DEC-001)
+- Created `_decisions.md` DEC-001: binding consultant decision — compliance urgency (CMP-001, CMP-002 deadline 2026-10-17) overrides contract optimisation; ASM-004 overridden; overrides: [ASM-004]
+- Created `_assumptions.md` ASM-004: OfficeScan maintenance assumption (phase 02 entry; overridden by DEC-001)
+- Created `03-mapping/service-map.md`: ratified, validator-green; 7 MAP entries — MAP-001 [no-known-service] (SIEM/SOC gap, no MDR in portfolio), MAP-002 EDR for detection component, MAP-003 Patch Management, MAP-004 EDR for OfficeScan replacement, MAP-005 WAN Management, MAP-006 IAM service, MAP-007 [no-known-service] (ISMS consultancy gap)
+- Created `03-mapping/recommendations.md`: ratified, validator-green; 6 REC blocks all with compliance_relation, cost, lock_in, opportunity_cost — REC-005 and REC-006 are [no-known-service] for SIEM and ISMS
+- Trace + sources JSONL files for phases 02 and 03
+- Engagement git commit: 583dab5 on meridian-logistics master
+- Files changed: ~/engagements/meridian-logistics/02-gap/*, 03-mapping/*, _assumptions.md, _contradictions.md, _decisions.md (engagement repo), .ralph/prd.json (US-032 passes: true)
+- **Learnings for future iterations:**
+  - parse_yaml_blocks only captures inline scalar values (not multi-line `>` block scalars) — framework names in `>` block scalar content are safe from framework_name_in_structured_fields rule; only inline title/proposed_service values need to avoid framework names
+  - For synthesizer-produced gap blocks, current_state/desired_state must use `[inferred]` label with `from: <URI> + <URI>` sources (not SIT-NNN ids) — SIT-NNN ids in situation.md are in tables not YAML blocks so _collect_ids_from_text misses them
+  - Dotted refs like `GAP-001.current_state` in gap_description `from:` are safely skipped by claim_composition_resolvable (fullmatch fails for dotted refs)
+  - GAP-id numbering should match ASM `invalidates_if_wrong` pointers set up in prior phases (GAP-003 was pre-assigned to the WAN gap by ASM-001)
+  - The `cost:` key only needs to be present in REC blocks (parse_yaml_blocks stores `[]` for multi-line sub-keys but the key IS in _present_keys); similarly lock_in and opportunity_cost with `>` are fine
+---
+
 ## 2026-05-25 - US-031
 - Created `01-situation/situation.md`: ratified, validator-green, produced_by: synthesizer; contains 10 [inferred] + 1 [assumed] claims covering infrastructure, network, security, IAM, EUC, applications, org context, compliance posture, and strategic implications
 - Created `01-situation/interviewer-output.md`: produced_by: interviewer; 6 [elicited] claims (SIT-007 to SIT-012) covering WAN topology, patch management gap, SIEM/IR absence, certification scope, WMS shortlist, shared admin credentials
