@@ -1,3 +1,16 @@
+## 2026-05-25 - US-011
+- Implemented `validator/rules/framework_name_in_structured_fields.py` — rejects bare framework names (GDPR, NIS2, ISO27001, DORA, PCI-DSS, HIPAA, SOC2, NIST, CIS, ENISA, CCPA, LGPD) in markdown headings and YAML structured fields; tolerates them in narrative prose paragraphs; `FRAMEWORK_NAMES` list at top of file is the configurable extension point
+- Implemented `validator/rules/claim_composition_resolvable.py` — parses all `[source:from: A + B]` refs in body lines; resolves claim ids from `parse_yaml_blocks()` in the current artifact and (when the artifact is inside a recognisable engagement repo phase dir) from all ratified artifacts in prior phase directories; structured-looking refs (matching `[A-Z]{2,8}-\d+`) that aren't in scope are reported as violations; non-structured refs (URIs etc.) are silently skipped
+- Updated `validator/cli.py` to run all 12 rules
+- Added 11 new tests (71 total pass); ruff + mypy clean
+- Files changed: validator/rules/framework_name_in_structured_fields.py, validator/rules/claim_composition_resolvable.py, validator/cli.py, validator/tests/test_rules.py
+- **Learnings for future iterations:**
+  - `framework_name_in_structured_fields.py` has a `FRAMEWORK_NAMES` list — add new framework names there; the regex is rebuilt from it at module load time
+  - `claim_composition_resolvable.py` scope resolution depends on `_PHASE_ORDER` list and the engagement repo's directory layout (00-intake/ … 06-retro/); artifacts outside this layout fall back to current-artifact-only scope
+  - Only ratified artifacts from prior phases contribute to composition scope — draft artifacts are excluded to avoid premature cross-phase references
+  - `_CLAIM_ID_RE.fullmatch(ref)` (not `search`) is used to validate refs so bare words like "all" in `from: all + B` don't generate spurious violations
+---
+
 ## 2026-05-25 - US-010
 - Implemented `validator/rules/gap_compliance_drivers_field.py` — rejects GAP-NNN blocks missing `compliance_drivers` field (empty list `[]` is valid); when `_compliance.md` is found (artifact.parent or artifact.parent.parent), also rejects broken CMP-NNN pointer references
 - Implemented `validator/rules/recommendation_required_fields.py` — rejects REC-NNN blocks missing any of `compliance_relation`, `cost`, `lock_in`, `opportunity_cost` (each generates a separate violation; "none"/"tbc" are valid values, absence is not)
