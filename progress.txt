@@ -1,3 +1,15 @@
+## 2026-05-25 - US-018
+- Implemented `prompts/subagents/portfolio-retriever.md` — read-only portfolio MCP retriever; emits [known] only; source URI format `portfolio://<domain>/<file>.md@<sha-or-mtime>`; confidence always H; stateless; no synthesis; model Sonnet
+- Implemented `prompts/subagents/customer-data-retriever.md` — read-only customer MCP retriever; emits [known] only; source URI format `customer-portal://<resource>/<id>@<updated_at>`; confidence always H; stateless; no synthesis; model Sonnet; scope-isolated per customer_id
+- Both prompts forbid all labels except [known]; forbid tool access outside their respective MCP; forbid cross-referencing other customers; include head() freshness check instructions
+- No new code; orchestrator prompt markdown only; all 175 tests still pass; ruff + mypy clean
+- Files changed: prompts/subagents/portfolio-retriever.md, prompts/subagents/customer-data-retriever.md
+- **Learnings for future iterations:**
+  - Subagent prompts follow same pattern as orchestrator prompts: pure markdown, no Python; quality checks still run and pass
+  - Retriever confidence is always H — the source system is authoritative; do not let retrievers emit M or L
+  - portfolio-retriever uses `head(name)` (single arg); customer-data-retriever uses `head(resource_type, customer_id)` (two args) — different signatures match their respective MCP tools
+---
+
 ## 2026-05-25 - US-017
 - Implemented `prompts/orchestrator/00-intake.md` — full seven-step orchestrator loop for phase 00-intake
 - Step 1: read engagement CLAUDE.md, verify scaffold; Step 2: announce plan (HITL gate 0); Step 3: HITL gate 1 (entry confirm, 4-item checklist); Step 4: invoke interviewer subagent with elicitation goals; Step 5: populate scope.md from template scope@1.0.0; Step 6: run validator with max-2-retry bounded policy; Step 7: HITL gate 3 ratification + commit
