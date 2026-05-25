@@ -1,3 +1,25 @@
+## 2026-05-25 - US-026
+- Implemented `prompts/orchestrator/06-retro.md` — seven-step orchestrator loop for phase 06-retro
+- Entry condition: `05-handover/handover.md` must have `status: ratified`; halts immediately if not
+- Whitelisted subagents: synthesizer only; all retrievers and interviewer forbidden
+- Two committed outputs: `06-retro/retro.md` (engagement repo) + `CR-YYYY-NNN.md` files (harness repo `backlog/change-requests/`)
+- Retro §4 (Data-Quality Meta-Findings) is the designated home for MSP portal hygiene findings; §4.1 contradiction statistics mandatory with path-c rate
+- Change requests named with originating customer verbatim (no anonymisation); separate git commit from ratification commit
+- CR file frontmatter enforced: status, origin_phase, originating_customer, proposed_change_target
+- Step 4 gathers contradiction stats and engagement metrics before synthesis; no new retrieval
+- Validator must exit 0; key rules include template_conformance.py checking all five required H2 sections
+- Engagement is fully closed on completion (retro commit + CR commit = two separate commits)
+- No new code; prompt markdown only; all 175 tests still pass; ruff + mypy clean
+- Files changed: prompts/orchestrator/06-retro.md
+- **Learnings for future iterations:**
+  - Retro is the ONLY phase that may contain MSP portal data quality and harness tooling observations — §4 is the designated home; never suppress or omit these
+  - Two separate git commits are required: engagement-repo ratification commit and harness-repo CR commit; bundling them is a guardrail violation
+  - CR files name the originating customer directly (no anonymisation) — the harness backlog is internal, not customer-facing
+  - Check existing `backlog/change-requests/` files before writing CRs to avoid sequence collisions (CR-YYYY-NNN numbering must be collision-free)
+  - template_conformance.py checks for all five H2 sections: What Worked, What Failed, What Surprised, Data-Quality Meta-Findings, Change Requests — all five must exist even if the body is "No issues observed"
+  - Path (c) resolution rate (assumptions-logged / total-raised) is a required metric in §4.1; it is the primary indicator of how much uncertainty was deferred rather than resolved
+---
+
 ## 2026-05-25 - US-025
 - Implemented `prompts/orchestrator/05-handover.md` — seven-step orchestrator loop for phase 05-handover
 - Entry condition: `04-roadmap/roadmap.md` must have `status: ratified`; halts immediately if not
