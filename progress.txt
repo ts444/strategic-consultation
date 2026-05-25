@@ -107,3 +107,21 @@
   - Non-empty target check is done before mkdir: `target.exists() and any(target.iterdir())` — covers the case where the dir exists but mkdir would succeed (empty dir)
   - Git commit during scaffold sets no custom author/email; uses system git config; if git config is incomplete in CI, commit may fail
 ---
+
+## 2026-05-25 - US-008
+- Implemented `validator/__init__.py` — `Violation` dataclass (rule, line, message)
+- Implemented `validator/_util.py` — `body_lines()` skips frontmatter and returns 1-based (lineno, text) pairs; `frontmatter_keys()` extracts top-level YAML keys
+- Implemented `validator/cli.py` — `validate <artifact-path>` argparse entrypoint; runs all four rules; groups output by rule name; exits 1 on any violation
+- Implemented `validator/rules/claim_label_present.py` — rejects lines with `[source:]` or `[conf:]` that lack a valid label tag
+- Implemented `validator/rules/claim_source_present.py` — rejects label-bearing lines that lack `[source:`
+- Implemented `validator/rules/claim_confidence_present.py` — rejects label-bearing lines that lack `[conf:H|M|L]`
+- Implemented `validator/rules/frontmatter_required_fields.py` — rejects artifacts missing any of `phase`, `status`, `harness_version`, `template`
+- Implemented `validator/tests/test_rules.py` — 22 tests (passing + failing fixtures for each rule + CLI integration tests)
+- Files changed: validator/__init__.py, validator/_util.py, validator/cli.py, validator/rules/__init__.py, four rule files, validator/tests/__init__.py, validator/tests/test_rules.py
+- **Learnings for future iterations:**
+  - `body_lines()` in `validator/_util.py` is the canonical way to get non-frontmatter lines with 1-based numbers — use it in every rule
+  - `frontmatter_keys()` checks `not line[0].isspace()` (not the stripped version) to avoid picking up nested YAML keys
+  - Rules follow a three-file contract: `RULE: str`, `check(path: Path) -> list[Violation]`, importable as `from validator.rules import <module>`
+  - CLI uses explicit `list[tuple[str, Callable[[Path], list[Violation]]]]` to satisfy mypy strict — avoids the module-attribute access pattern that mypy can't type-check
+  - `[conf:X]` where X is not H/M/L is treated as "missing confidence" because the regex `[conf:[HML]]` won't match it
+---
