@@ -23,3 +23,20 @@
   - [no-known-service] is an explicit placeholder value for proposed_service when no portfolio service fits (design-principles §4 "recommend against MSP services")
   - Producer binding (§1.2 table) is enforceable via trace/frontmatter metadata — not just an assertion
 ---
+
+## 2026-05-25 - US-003
+- Implemented six register schema docs in `templates/_registers/`
+- `_assumptions.md`: ASM-NNN entry schema, `requires_revalidation` flag, `invalidates_if_wrong` claim pointers
+- `_decisions.md`: DEC-NNN entry schema, `overrides: <claim-id>` field for resolution-path (d), worked example showing contradiction closure
+- `_risks.md`: RSK-NNN entry schema, lifecycle `status` field, register-level frontmatter shape
+- `_contradictions.md`: CON-NNN entry schema, all four `Status` values (unresolved|resolved-by-{a|b|c|d}-...), `Blocks: <phase>` semantics, collision type taxonomy
+- `_compliance.md`: CMP-NNN entry schema, `role: constraint|deadline|enabler`, `deadline` required iff `role=deadline` and forbidden otherwise, two worked examples
+- `_budget.md`: BUD-NNN envelope schema with `capex`/`opex_annual`/`renewals`/`hard_limit`/`soft_preference`; explicit prohibition on bare `total:` field; renewal object schema
+- Each file has register-level frontmatter shape and at least one worked example
+- Files changed: templates/_registers/_assumptions.md, _decisions.md, _risks.md, _contradictions.md, _compliance.md, _budget.md (all created)
+- **Learnings for future iterations:**
+  - `_compliance.md` `deadline` field is conditionally required — only present when `role: deadline`; absence enforced when role is constraint/enabler
+  - `_budget.md` total-field prohibition is explicit in schema prose and validator notes — validator rule should match on single-total-field presence
+  - `_contradictions.md` Status field capitalised by convention (machine-parseable by validator)
+  - `_decisions.md` overrides field is the machine-readable hook for claim_composition_resolvable.py
+---
