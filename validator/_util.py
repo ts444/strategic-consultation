@@ -13,6 +13,22 @@ def body_lines(text: str) -> list[tuple[int, str]]:
     return [(i + 1, raw[i]) for i in range(start, len(raw))]
 
 
+def frontmatter_value(text: str, key: str) -> str | None:
+    """Return the value of a top-level frontmatter key, or None if absent."""
+    raw = text.splitlines()
+    if not raw or raw[0].strip() != "---":
+        return None
+    for line in raw[1:]:
+        if line.strip() == "---":
+            break
+        if not line or line[0].isspace():
+            continue
+        if line.startswith(f"{key}:"):
+            val = line.split(":", 1)[1].strip().strip('"').strip("'")
+            return val if val else None
+    return None
+
+
 def frontmatter_keys(text: str) -> set[str]:
     """Return the set of top-level keys declared in YAML frontmatter."""
     raw = text.splitlines()

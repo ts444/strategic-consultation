@@ -11,7 +11,10 @@ from validator.rules import (
     claim_confidence_present,
     claim_label_present,
     claim_source_present,
+    confidence_propagation,
     frontmatter_required_fields,
+    label_producer_binding,
+    template_conformance,
 )
 
 _CHECKERS: list[tuple[str, Callable[[Path], list[Violation]]]] = [
@@ -19,6 +22,9 @@ _CHECKERS: list[tuple[str, Callable[[Path], list[Violation]]]] = [
     (claim_source_present.RULE, claim_source_present.check),
     (claim_confidence_present.RULE, claim_confidence_present.check),
     (frontmatter_required_fields.RULE, frontmatter_required_fields.check),
+    (label_producer_binding.RULE, label_producer_binding.check),
+    (confidence_propagation.RULE, confidence_propagation.check),
+    (template_conformance.RULE, template_conformance.check),
 ]
 
 
