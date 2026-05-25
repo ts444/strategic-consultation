@@ -1,0 +1,25 @@
+## Codebase Patterns
+- prd.json lives at `.ralph/prd.json`, not at the repo root
+- progress.txt lives at the repo root (same dir as CLAUDE.md and design-principles.md)
+- All markdown documents (templates, schemas) reference design-principles.md as the binding spec
+- Worked examples belong inline inside schema docs, not in separate fixtures
+- Claim ids use block-type prefix + NNN (GAP-NNN, REC-NNN, RSK-NNN, RMI-NNN, BUD-NNN, CMP-NNN)
+
+---
+
+## 2026-05-25 - US-002
+- Implemented `templates/_claim.schema.md` — the single source of truth for claim atoms and composed blocks
+- Defines claim atom (mandatory [label] [source:<uri>] [conf:H|M|L]) and the four labels with producer bindings
+- Defines all four source URI shapes (portfolio://, customer-portal://, interview:, from:)
+- Defines composed block schemas: Gap, Recommendation, Risk, Roadmap-item with all mandatory fields from Q5/Q8
+- States confidence-propagation rule (composed conf ≤ min(input confs))
+- Includes one worked example per block type inline
+- Includes §4 validator coverage table linking each structural rule to its enforcing rule file
+- Files changed: templates/_claim.schema.md (created), progress.txt (created)
+- **Learnings for future iterations:**
+  - Gap compliance_drivers is a list of CMP-NNN ids; empty list is valid but field must be present
+  - Recommendation requires compliance_relation, cost, lock_in, opportunity_cost — "none" and "tbc" are valid values; absence is not
+  - Roadmap-item's compliance_deadline is only required when compliance_role is "deadline"
+  - [no-known-service] is an explicit placeholder value for proposed_service when no portfolio service fits (design-principles §4 "recommend against MSP services")
+  - Producer binding (§1.2 table) is enforceable via trace/frontmatter metadata — not just an assertion
+---
