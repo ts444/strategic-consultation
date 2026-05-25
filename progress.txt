@@ -1,3 +1,16 @@
+## 2026-05-25 - US-015
+- Implemented `harness/decay_check.py` — `run_decay_check(engagement_repo, ...)` with four decay types: (1) HARD STALE: `[known]` claims re-checked via injectable `head_portfolio(source_name)` and `head_customer(resource_type, id)` callables; flags when ref/updated_at differs; silently appends to `_trace.jsonl` when unchanged; (2) ELICITED DUE FOR REVALIDATION: `[elicited]` claims whose phase-distance ≥ threshold (H=3, M=2, L=1, configurable via `elicited_thresholds` param); (3) ASSUMPTIONS FLAGGED: parses `_assumptions.md` YAML blocks, flags entries with `requires_revalidation: true` where `current_phase > phase_expires`; (4) DOWNSTREAM IMPACT: `[inferred]/[assumed]` claims composed via `from: A + B` that reference stale claim IDs
+- `harness/decay_check.py` CLI: `decay_check <engagement-repo> [--current-phase N] [--skip-known]`; auto-detects current phase from highest ratified artifact; exits non-zero on any stale finding; grouped output per section
+- Added 29 tests in `harness/tests/test_decay_check.py`; 148 total pass (1 skipped); ruff + mypy clean
+- Files changed: harness/decay_check.py, harness/tests/test_decay_check.py
+- **Learnings for future iterations:**
+  - `harness/decay_check.py` has no dependency on `validator/_util.py` — all YAML parsing is self-contained to keep `harness` standalone
+  - `head_portfolio` and `head_customer` are injectable callables (defaulting to `None` = skip); tests mock them directly without spawning MCP subprocesses
+  - `_phase_idx_of(artifact)` works by scanning `artifact.parts` for a match in `_PHASE_INDEX` — artifacts must reside under a `0N-<name>/` directory to get a phase index; artifacts outside phase dirs get `phase_idx=-1` (skipped in elicited decay)
+  - `_check_assumptions` parses `_assumptions.md` from the engagement root (not from templates/); the scaffold stub has YAML frontmatter but assumptions entries are in ````yaml``` fenced blocks using `---...---` delimiters
+  - Downstream impact only cascades one level (not transitively) — this matches the spec's "cascades from input changes" language without over-engineering
+---
+
 ## 2026-05-25 - US-014
 - Implemented `mcp/customer-mcp/customer_server.py` — four read-only tools: `list_assets(customer_id)`, `list_contracts(customer_id)`, `compliance_posture(customer_id)`, `head(resource_type, customer_id)`; every response embeds `customer-portal://<resource>/<id>@<updated_at>` source URI; bearer token from `CUSTOMER_PORTAL_BEARER_TOKEN` env var; portal URL from `CUSTOMER_PORTAL_URL` env var (default `http://localhost:3000`)
 - Implemented `mcp/customer-mcp/__main__.py` — MCP JSON-RPC 2.0 stdio server; identical pattern to `portfolio-mcp/__main__.py`
