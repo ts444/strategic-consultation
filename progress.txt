@@ -1,3 +1,18 @@
+## 2026-05-25 - US-010
+- Implemented `validator/rules/gap_compliance_drivers_field.py` — rejects GAP-NNN blocks missing `compliance_drivers` field (empty list `[]` is valid); when `_compliance.md` is found (artifact.parent or artifact.parent.parent), also rejects broken CMP-NNN pointer references
+- Implemented `validator/rules/recommendation_required_fields.py` — rejects REC-NNN blocks missing any of `compliance_relation`, `cost`, `lock_in`, `opportunity_cost` (each generates a separate violation; "none"/"tbc" are valid values, absence is not)
+- Implemented `validator/rules/roadmap_item_required_fields.py` — rejects RMI-NNN blocks missing `compliance_role`; rejects `compliance_role: deadline` blocks without `compliance_deadline`; rejects non-deadline blocks that have `compliance_deadline`; rejects missing `budget_envelope`; when `_budget.md` found checks BUD-NNN references; file-level violation when roadmap has no Y1 `quick_win: true`
+- Added `parse_yaml_blocks(text) -> list[dict]` helper to `validator/_util.py` — shared YAML block parser used by all three new rules; returns `_lineno`, `_present_keys`, and field values (str, list[str], or None) per block
+- Updated `validator/cli.py` to run all 10 rules
+- Added 20 new tests (60 total pass); ruff + mypy clean
+- Files changed: validator/_util.py, validator/rules/gap_compliance_drivers_field.py, validator/rules/recommendation_required_fields.py, validator/rules/roadmap_item_required_fields.py, validator/cli.py, validator/tests/test_rules.py
+- **Learnings for future iterations:**
+  - `parse_yaml_blocks()` in `_util.py` is now the canonical YAML block parser — use it for any rule that needs structured field extraction from ```yaml fences
+  - Register lookup (e.g. `_compliance.md`, `_budget.md`) searches `artifact.parent` then `artifact.parent.parent`; if not found, skips reference validation (no false positives for artifacts run outside a full engagement repo)
+  - `_present_keys` in a block dict is the canonical way to check field presence — distinguish "present with empty/no value" from "field absent"
+  - mypy strict mode: `dict[str, object]` values require `assert isinstance(...)` before use; `int(block["_lineno"])` raises a call-overload error, use `assert isinstance(lineno_raw, int)` pattern
+---
+
 ## 2026-05-25 - US-009
 - Implemented `validator/rules/label_producer_binding.py` — reads `produced_by` frontmatter, rejects claims with labels not in the producer's allowed set (synthesizer→inferred/assumed; portfolio-retriever/customer-data-retriever→known; interviewer→elicited). Skips unknown producers.
 - Implemented `validator/rules/confidence_propagation.py` — parses `\`\`\`yaml` fences in document body, builds `{block_id.field_name → conf}` map, then rejects composed claims (`from: A + B`) whose conf exceeds min(input confs). Skips when input confs can't be resolved.
