@@ -57,3 +57,21 @@
   - gaps.template.md uses a goal-coverage-map table (§1) as the structural contract for the "every goal mapped" exit criterion — the orchestrator prompt should check this table
   - SIT-NNN ids thread from situation.template.md into gaps.template.md `evidence` fields — preserving that numbering sequence across phases matters
 ---
+
+## 2026-05-25 - US-005
+- Implemented `templates/service-map.template.md` (phase 03-mapping, exhaustive gap×service matrix)
+- Implemented `templates/recommendations.template.md` (phase 03-mapping, curated subset with four mandatory fields)
+- Implemented `templates/roadmap.template.md` (phase 04-roadmap, sequencing argument + roadmap items)
+- service-map.template.md: exhaustive mapping table (§1), YAML mapping blocks with fit_rationale claim (§2), portfolio domains searched (§3), [no-known-service] example with retro-flag note
+- recommendations.template.md: compliance_relation, cost, lock_in, opportunity_cost are MANDATORY on every block; "none" and "tbc" are valid values; absence is a validator error (recommendation_required_fields.py); [no-known-service] worked example included
+- roadmap.template.md: mandatory '## Sequencing argument' H2; quick_win boolean on every block with >=1 Y1 quick-win rule (FR-26); compliance_role required on every item; compliance_deadline required iff role=deadline and absent otherwise; budget_envelope required referencing BUD-NNN from _budget.md; worked examples for deadline/constraint/none cases
+- All three templates have YAML frontmatter (phase, status, harness_version, template@version, ratified_by, ratified_at, produced_by)
+- All three reference _claim.schema.md by name in exit criteria comment block
+- Files changed: templates/service-map.template.md, templates/recommendations.template.md, templates/roadmap.template.md (all created)
+- **Learnings for future iterations:**
+  - roadmap.template.md '## Sequencing argument' H2 must match exactly — template_conformance.py will check by name
+  - compliance_deadline must be ABSENT (not empty string) when compliance_role != "deadline" — worked examples model this explicitly
+  - budget_envelope references must resolve to a BUD-NNN id in _budget.md; unresolvable reference is a validator error
+  - quick_win boolean must appear on every roadmap item; validator checks for >=1 Y1 item with quick_win: true
+  - service-map.template.md and recommendations.template.md are companion artifacts in the same phase (03-mapping); both must be ratified before entering phase 04
+---
