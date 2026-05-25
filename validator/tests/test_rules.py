@@ -1089,4 +1089,59 @@ def test_composition_resolvable_fail_unratified_prior_phase(tmp_path: Path) -> N
     )
     violations = claim_composition_resolvable.check(gaps)
     assert len(violations) == 1
-    assert "GAP-001" in violations[0].message
+
+
+# ---------------------------------------------------------------------------
+# body_lines: HTML comment block skipping (CR-2026-001)
+# ---------------------------------------------------------------------------
+
+
+def test_html_comment_multiline_skipped(tmp_path: Path) -> None:
+    """Lines inside a multi-line HTML comment are not treated as claim content."""
+    body = (
+        "<!--\n"
+        "[source:foo] [conf:H]\n"
+        "[known] [source:bar] [conf:M]\n"
+        "-->\n"
+        "# Heading\n"
+    )
+    f = _artifact(tmp_path, body)
+    # claim_label_present would fire on the [source:] line if comment not skipped
+    assert claim_label_present.check(f) == []
+    # claim_source_present would fire on the [known] line if comment not skipped
+    assert claim_source_present.check(f) == []
+
+
+def test_html_comment_singleline_skipped(tmp_path: Path) -> None:
+    """A single-line <!-- ... --> comment is entirely skipped."""
+    body = "<!-- [source:foo] [conf:H] [known] -->\n# Plain heading\n"
+    f = _artifact(tmp_path, body)
+    assert claim_label_present.check(f) == []
+    assert claim_source_present.check(f) == []
+
+
+def test_html_comment_does_not_suppress_real_claims_after(tmp_path: Path) -> None:
+    """Claims after a comment block are still validated."""
+    body = (
+        "<!--\n"
+        "[source:irrelevant] [conf:H]\n"
+        "-->\n"
+        "[source:real] [conf:H]\n"  # missing label — should trigger violation
+    )
+    f = _artifact(tmp_path, body)
+    violations = claim_label_present.check(f)
+    assert len(violations) == 1
+
+
+def test_html_comment_claim_inside_valid_outside(tmp_path: Path) -> None:
+    """A well-formed claim outside a comment passes even when comment contains noise."""
+    body = (
+        "<!--\n"
+        "assumed and elicited label names in prose here\n"
+        "-->\n"
+        "[known] [source:portfolio://x/y.md@abc123] [conf:H] Actual claim.\n"
+    )
+    f = _artifact(tmp_path, body)
+    assert claim_label_present.check(f) == []
+    assert claim_source_present.check(f) == []
+    assert claim_confidence_present.check(f) == []

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def body_lines(text: str) -> list[tuple[int, str]]:
-    """Return (1-based line number, content) for all non-frontmatter lines."""
+    """Return (1-based line number, content) for non-frontmatter, non-HTML-comment lines."""
     raw = text.splitlines()
     start = 0
     if raw and raw[0].strip() == "---":
@@ -12,7 +12,21 @@ def body_lines(text: str) -> list[tuple[int, str]]:
             if raw[i].strip() == "---":
                 start = i + 1
                 break
-    return [(i + 1, raw[i]) for i in range(start, len(raw))]
+    result: list[tuple[int, str]] = []
+    in_comment = False
+    for i in range(start, len(raw)):
+        line = raw[i]
+        if in_comment:
+            if "-->" in line:
+                in_comment = False
+            continue
+        if "<!--" in line:
+            open_idx = line.index("<!--")
+            if line.find("-->", open_idx + 4) == -1:
+                in_comment = True
+            continue
+        result.append((i + 1, line))
+    return result
 
 
 def frontmatter_value(text: str, key: str) -> str | None:

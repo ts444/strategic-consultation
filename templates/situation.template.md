@@ -32,6 +32,11 @@ Claim atom rules: every substantive assertion must carry [label] [source:<uri>] 
 See templates/_claim.schema.md for the full schema. This file wins over any conflict.
 -->
 
+> **Author note:** Do not write claim-label names (`known`, `inferred`, `elicited`, `assumed`) inside
+> square brackets in descriptive prose. The validator treats any such token as a claim annotation and
+> will flag it if the label type does not match the artifact's `produced_by` frontmatter field. Use
+> plain text instead (e.g., "inferred label" not `[inferred]`).
+
 # Situation Summary: {{CUSTOMER_NAME}}
 
 > **Harness version:** `{{HARNESS_VERSION}}`
