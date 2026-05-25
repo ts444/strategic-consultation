@@ -1,3 +1,23 @@
+## 2026-05-25 - US-025
+- Implemented `prompts/orchestrator/05-handover.md` — seven-step orchestrator loop for phase 05-handover
+- Entry condition: `04-roadmap/roadmap.md` must have `status: ratified`; halts immediately if not
+- Whitelisted subagents: synthesizer only; portfolio-retriever, customer-data-retriever, and interviewer all forbidden
+- MSP portal hygiene exclusion enforced throughout: handover.md is customer-facing; all meta-findings about MSP portfolio data quality or harness tooling are forbidden and belong exclusively in retro
+- Step 4: contradiction check only (no retrieval); synthesis blocked while any Blocks: 05-handover entry is unresolved
+- Step 5: synthesizer invoked with all ratified phase artifacts (scope goals, SIT, GAP, REC, RMI, roadmap sequencing arg, decisions, assumptions, risks); produces handover.md with five mandatory sections
+- Mandatory sections: Executive Narrative, Roadmap Summary (RMI table by year, quick-wins flagged), Decision Log (DEC-NNN verbatim with overrides: pointers), Assumption Register (requires_revalidation flags), Risk Log (RSK-NNN with statuses)
+- Executive narrative grounded in prior ratified claim ids; confidence propagation mandatory; written for non-technical executive audience
+- Step 6: validator max-2 retries; key rules: frontmatter_required_fields, claim atoms, confidence_propagation, framework_name_in_structured_fields, claim_composition_resolvable
+- Step 7: HITL gate 3 ratification with explicit MSP portal hygiene exclusion check in summary
+- No new code; prompt markdown only; all 175 tests still pass; ruff + mypy clean
+- Files changed: prompts/orchestrator/05-handover.md
+- **Learnings for future iterations:**
+  - Handover is the only phase where the MSP portal hygiene exclusion is explicitly enforced — handover.md is customer-facing and must never contain data quality or harness observations; those belong in retro §5
+  - Handover is synthesizer-only (no retrievers, no interviewer); evidence base is closed at this point — the entire phase draws from prior ratified artifacts
+  - DEC-NNN `overrides:` pointers must be reproduced verbatim in the Decision Log; they are machine-readable hooks for claim_composition_resolvable.py
+  - The five H2 sections (Executive Narrative, Roadmap Summary, Decision Log, Assumption Register, Risk Log) are all required; template_conformance.py checks for them — omitting any is a validator error
+---
+
 ## 2026-05-25 - US-024
 - Implemented `prompts/orchestrator/04-roadmap.md` — seven-step orchestrator loop for phase 04-roadmap
 - Entry condition: `03-mapping/recommendations.md` must have `status: ratified`; halts immediately if not
