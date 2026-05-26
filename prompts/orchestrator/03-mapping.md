@@ -112,6 +112,9 @@ Before mapping begins, confirm:
   [ ] You are satisfied that all GAP-NNN ids are final (no additions expected today)
   [ ] CMP-NNN and BUD-NNN registers are current and committed
   [ ] You have 60–90 minutes for this session (dual artifact — allow extra time)
+  [ ] You understand that any [no-known-service] mapping entries will require a
+      documented build/buy/partner decision (DEC-NNN in _decisions.md) before
+      ratification; be prepared to make these decisions after the retrieval step
 ```
 
 Proceed only when all items are confirmed YES. Record the gate timestamp in the HITL
@@ -180,6 +183,18 @@ Invoke `synthesizer` with:
   - For gaps with no candidate service: create one MAP entry with `proposed_service: "[no-known-service]"`,
     `portfolio_uri: ""`, `curated: false`, and a `fit_rationale` explaining why no service fits
     and flagging the portfolio gap for retro
+  - **DECISION_REQUIRED block (mandatory for every [no-known-service] entry):** immediately
+    after each `[no-known-service]` MAP entry, emit a fenced `DECISION_REQUIRED` YAML block
+    containing:
+    - `gap_id`: the GAP-NNN id
+    - `gap_description`: a one-sentence summary of the gap
+    - `options`:
+      - `build`: deliver the capability in-house (staff, tooling, IP owned by customer)
+      - `buy`: procure a third-party product or SaaS that covers the gap
+      - `partner`: engage a specialist firm to deliver and operate the capability
+    - `required_before`: `03-mapping ratification`
+    This block signals to the consultant that a DEC-NNN entry choosing one option must be
+    written to `_decisions.md` before the phase can ratify.
   - Every `fit_rationale` must be an [inferred] claim with `from: GAP-NNN + portfolio://<uri>` notation
   - Confidence propagation is mandatory; fit_rationale conf ≤ min(conf of input claims)
   - Populate §3 Portfolio Domains Searched with domain names and `head()` timestamps from Step 4
@@ -197,6 +212,10 @@ After `service-map.md` is validator-green (see Step 7), invoke `synthesizer` aga
 - Instructions for the synthesizer:
   - Select the single highest-fit service per gap (the MAP entry marked `curated: true`, or the
     `[no-known-service]` placeholder if no service fits)
+  - For each REC entry that has `proposed_service: "[no-known-service]"` and the corresponding
+    DEC-NNN decision selects `buy` or `partner`: add a `roadmap_note` field to the REC block
+    stating that Phase 04 roadmap **must** include a sourcing/procurement RMI item for this gap
+    (e.g. "Phase 04 must include a sourcing RMI: procure [partner/product] to address GAP-NNN")
   - Assign REC-NNN ids sequentially starting from REC-001
   - Every GAP-NNN must be addressed by at least one REC-NNN
   - All four mandatory fields are REQUIRED on every REC block:
@@ -269,6 +288,9 @@ To request changes: describe what needs changing (I will loop back to the approp
 - [ ] Every MAP entry has a `fit_rationale` with source and confidence
 - [ ] Every `[no-known-service]` entry has a written rationale explaining why no service fits
       and is flagged for retro
+- [ ] **BLOCKING — build/buy/partner decisions:** every `[no-known-service]` MAP entry has a
+      corresponding DEC-NNN entry in `_decisions.md` selecting `build`, `buy`, or `partner`
+      with a non-empty rationale. Ratification is explicitly blocked until this is satisfied.
 - [ ] Every GAP-NNN is addressed by at least one REC-NNN in recommendations.md
 - [ ] All four mandatory fields (`compliance_relation`, `cost`, `lock_in`, `opportunity_cost`)
       are present on every REC block
@@ -302,6 +324,9 @@ Before committing the ratified artifacts, confirm ALL of the following:
       `[no-known-service]` entries for gaps with no portfolio fit)
 - [ ] Every MAP entry has a `fit_rationale` that is an [inferred] claim with `from:` source notation
 - [ ] Confidence propagation honoured: fit_rationale conf ≤ min(conf of input claims)
+- [ ] **Every `[no-known-service]` MAP entry has a corresponding DEC-NNN in `_decisions.md`
+      selecting build/buy/partner with rationale — this is a hard gate; ratification is blocked
+      until all such decisions are recorded**
 - [ ] Every GAP-NNN is addressed by at least one REC-NNN in recommendations.md
 - [ ] All four mandatory fields present on every REC block: `compliance_relation`, `cost`,
       `lock_in`, `opportunity_cost` (`none`/`tbc` is valid; absent is not)
