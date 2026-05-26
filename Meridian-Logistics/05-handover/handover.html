@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <style>
+    /* ── Typography ───────────────────────────────────────────────────── */
+    :root {
+      --brand-primary:   #1E40AF;
+      --brand-secondary: #0F766E;
+      --brand-accent:    #6D28D9;
+      --y1-colour:       #DBEAFE;
+      --y1-border:       #1E40AF;
+      --y2-colour:       #D1FAE5;
+      --y2-border:       #0F766E;
+      --y3-colour:       #EDE9FE;
+      --y3-border:       #6D28D9;
+      --quick-win-bg:    #FEF9C3;
+      --quick-win-fg:    #713F12;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", ui-sans-serif, system-ui, -apple-system,
+                   BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+                   Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #1a1a1a;
+      background: #ffffff;
+    }
+
+    /* ── Cover page ───────────────────────────────────────────────────── */
+    /*
+     * Replace assets/msp-logo.png with your actual MSP logo before
+     * generating client deliverables.  Recommended size: 200 × 60 px,
+     * transparent background, PNG or SVG.
+     */
+    .cover-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 80px 72px;
+      background: linear-gradient(135deg, #f0f4ff 0%, #fafafa 100%);
+      page-break-after: always;
+    }
+
+    .cover-logo {
+      max-width: 200px;
+      max-height: 80px;
+      margin-bottom: 48px;
+    }
+
+    .cover-title {
+      font-size: 28pt;
+      font-weight: 700;
+      color: var(--brand-primary);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .cover-customer {
+      font-size: 18pt;
+      font-weight: 600;
+      color: var(--brand-secondary);
+      margin-bottom: 8px;
+    }
+
+    .cover-meta {
+      font-size: 10pt;
+      color: #555;
+      margin-top: 8px;
+    }
+
+    .cover-divider {
+      width: 64px;
+      height: 4px;
+      background: var(--brand-primary);
+      border-radius: 2px;
+      margin: 24px 0;
+    }
+
+    /* ── Main content ────────────────────────────────────────────────── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* ── Headings ────────────────────────────────────────────────────── */
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 700;
+      line-height: 1.25;
+      margin-top: 2em;
+      margin-bottom: 0.5em;
+    }
+
+    h1 { font-size: 20pt; color: var(--brand-primary); border-bottom: 2px solid var(--brand-primary); padding-bottom: 6px; }
+    h2 { font-size: 15pt; color: var(--brand-primary); border-left: 4px solid var(--brand-primary); padding-left: 10px; }
+    h3 { font-size: 12pt; color: var(--brand-secondary); border-left: 3px solid var(--brand-secondary); padding-left: 8px; }
+    h4 { font-size: 10.5pt; color: var(--brand-accent); }
+
+    p { margin-bottom: 1em; }
+
+    /* ── Tables ──────────────────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5em 0;
+      font-size: 9.5pt;
+    }
+
+    th {
+      background: var(--brand-primary);
+      color: #fff;
+      text-align: left;
+      padding: 8px 10px;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td { background: #f9fafb; }
+
+    /* Roadmap year classes — applied by pandoc lua filter or manually */
+    .y1 td, tr.y1 td { background: var(--y1-colour); border-left: 3px solid var(--y1-border); }
+    .y2 td, tr.y2 td { background: var(--y2-colour); border-left: 3px solid var(--y2-border); }
+    .y3 td, tr.y3 td { background: var(--y3-colour); border-left: 3px solid var(--y3-border); }
+
+    /* ── Quick-win badge ─────────────────────────────────────────────── */
+    .quick-win,
+    td:last-child:not(:empty) {
+      /* The ✓ character in the Quick win column is styled via content match */
+    }
+
+    .badge-quick-win {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--quick-win-bg);
+      color: var(--quick-win-fg);
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      vertical-align: middle;
+    }
+
+    /* Style ✓ tick in last table column as a quick-win badge */
+    table td:last-child {
+      text-align: center;
+    }
+
+    /* ── Images (charts) ─────────────────────────────────────────────── */
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 1.5em auto;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+
+    /* ── Code / inline ───────────────────────────────────────────────── */
+    code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code",
+                   ui-monospace, monospace;
+      font-size: 0.88em;
+      background: #f3f4f6;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    pre {
+      background: #f3f4f6;
+      padding: 1em;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1.5em 0;
+    }
+
+    pre code { background: none; padding: 0; }
+
+    /* ── Print ───────────────────────────────────────────────────────── */
+    @media print {
+      body { font-size: 10pt; }
+      .cover-page { min-height: 100vh; }
+      main { padding: 24px 40px; }
+      h2 { page-break-after: avoid; }
+      table { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Cover page -->
+<div class="cover-page">
+  <img class="cover-logo"
+       src="assets/msp-logo.png"
+       alt="MSP logo" />
+  <div class="cover-divider"></div>
+  <div class="cover-title">Strategic IT Roadmap</div>
+
+
+</div>
+
+<main>
+
+<h2 id="executive-narrative">Executive Narrative</h2>
+<p>This engagement was commissioned to give Meridian-Logistics a defensible path to two specific compliance outcomes and one operational outcome: attestation under the NIS2 Directive within a 12-month horizon (G-01), a TISAX label at the December 2026 assessment (G-02), and a working, exercised Incident Response process (G-03). The three goals are tightly coupled — the TISAX assessment and the NIS2 attestation share evidentiary requirements around incident response, monitoring, business continuity, and policy maturity, and a credible IR process is a precondition for both. The work therefore frames a single coherent programme rather than three parallel tracks. [inferred] [source:from: GAP-002 + GAP-004 + RMI-009] [conf:H]</p>
+<p>The current situation is shaped by a 2025 ransomware incident that encrypted important VMs and ended in a paid ransom because the response capability was inadequate. Two preventative service contracts (Device Hardening and Mail Security) and the IT Change Management service all lapsed on 2026-05-25, leaving the estate measurably more exposed than it was the day before this engagement opened. The contracted IAM Gold service includes MFA, but enforcement has not been confirmed because of staff resistance, and the security policy framework is outdated and not in active use. There is no SIEM, no Business Continuity service, no Network Detection and Response, and no Threat Intelligence in the estate. [inferred] [source:from: GAP-004 + GAP-005 + GAP-006] [conf:H]</p>
+<p>Three gaps are rated critical and each maps directly to the ransomware lesson and to the compliance regimes in scope. GAP-001 (no SIEM or centralised security monitoring) means the organisation cannot detect an active intrusion in time to interrupt it. GAP-002 (no Incident Response capability) means that when an event is detected there is no rehearsed, role-clear process to contain and recover from it. GAP-003 (no Business Continuity Plan or BC service) means that recovery objectives are not defined, tested, or evidenced — a direct finding risk at the TISAX AL2 assessment and a direct material requirement under the NIS2 Directive. Left unaddressed, these three gaps make a repeat ransomware event both more likely and more damaging. [inferred] [source:from: GAP-001 + GAP-002 + GAP-003] [conf:H]</p>
+<p>The recommended direction sequences fourteen roadmap items in four capability phases — foundations, enablers, value-drivers, optimisations. Foundations in Q1 Y1 restore baseline integrity by reinstating Mail Security, Device Hardening, and IT Change Management and by deploying IT Asset Management; these are the quick wins that re-establish the controls that lapsed on 2026-05-25. Enablers in Q2–Q3 Y1 layer detection (SIEM), resilience (Business Continuity), governance (IT Risk Management), and identity assurance (MFA enforcement under CEO sponsorship). Value-drivers in late Y1 and H1 Y2 convert capability into TISAX and attestation evidence. The December 2026 TISAX assessment is the dominant near-term forcing function and pulls every TISAX-gating item into Y1. A budget conversation with the CEO is required before any procurement commitment, because the known programme run-rate exceeds the declared £200k hard limit in a single year. [inferred] [source:from: RMI-001 + RMI-002 + RMI-003 + RMI-005] [conf:H]</p>
+<p>By the end of Year 3, Meridian-Logistics should look materially different: the TISAX label retained, NIS2 attestation obtained and entity classification settled with the supervisory authority, an exercised IR process embedded in the organisation, a refreshed and actively-used policy framework, and an annual control review cadence that prevents the kind of silent contract expiry that produced the 2026-05-25 cliff. The shift is from reactive, contract-driven security to a governed, evidenced, and rehearsed operating model. [inferred] [source:from: RMI-013 + RMI-014] [conf:M]</p>
+<h3 id="key-findings">Key Findings</h3>
+<table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 44%" />
+<col style="width: 29%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Finding</th>
+<th>Gap addressed</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>No SIEM or centralised security monitoring — intrusions cannot be detected in time to interrupt them</td>
+<td>GAP-001</td>
+<td>critical</td>
+</tr>
+<tr class="even">
+<td>No Incident Response capability — no rehearsed process to contain and recover from events</td>
+<td>GAP-002</td>
+<td>critical</td>
+</tr>
+<tr class="odd">
+<td>No Business Continuity Plan or BC service — recovery objectives undefined, untested, unevidenced</td>
+<td>GAP-003</td>
+<td>critical</td>
+</tr>
+<tr class="even">
+<td>Information security policy framework is outdated and not in active use</td>
+<td>GAP-004</td>
+<td>high</td>
+</tr>
+<tr class="odd">
+<td>MFA enforcement maturity unconfirmed despite contracted IAM capability</td>
+<td>GAP-005</td>
+<td>high</td>
+</tr>
+<tr class="even">
+<td>Device Hardening and Mail Security contracts lapsed on 2026-05-25</td>
+<td>GAP-006</td>
+<td>high</td>
+</tr>
+<tr class="odd">
+<td>IT governance informal; Change Management lapsed and in Incident status</td>
+<td>GAP-007</td>
+<td>high</td>
+</tr>
+<tr class="even">
+<td>IT asset inventory incomplete</td>
+<td>GAP-008</td>
+<td>medium</td>
+</tr>
+<tr class="odd">
+<td>CMP-001 entity classification not validated with national supervisory authority</td>
+<td>GAP-009</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h2 id="roadmap-summary">Roadmap Summary</h2>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 11%" />
+<col style="width: 9%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 26%" />
+<col style="width: 17%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>RMI-id</th>
+<th>Title</th>
+<th>Year</th>
+<th>Phase</th>
+<th>Owner</th>
+<th>Compliance role</th>
+<th>Quick win</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>RMI-001</td>
+<td>Reinstate Mail Security contract</td>
+<td>Y1</td>
+<td>foundations</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>constraint</td>
+<td>✓</td>
+</tr>
+<tr class="even">
+<td>RMI-002</td>
+<td>Reinstate Device Hardening contract</td>
+<td>Y1</td>
+<td>foundations</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>constraint</td>
+<td>✓</td>
+</tr>
+<tr class="odd">
+<td>RMI-003</td>
+<td>Reinstate and resolve IT Change Management</td>
+<td>Y1</td>
+<td>foundations</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>constraint</td>
+<td>✓</td>
+</tr>
+<tr class="even">
+<td>RMI-004</td>
+<td>Deploy IT Asset Management</td>
+<td>Y1</td>
+<td>foundations</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>constraint</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>RMI-005</td>
+<td>Enforce MFA via contracted IAM capability</td>
+<td>Y1</td>
+<td>enablers</td>
+<td>Izayoi Nayuta (CISO), sponsored by Cheng Zebang (CEO)</td>
+<td>constraint</td>
+<td>✓</td>
+</tr>
+<tr class="even">
+<td>RMI-006</td>
+<td>Deploy SIEM for centralised security monitoring</td>
+<td>Y1</td>
+<td>enablers</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>deadline (2026-12-01)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>RMI-007</td>
+<td>Deploy IT Risk Management for governance framework</td>
+<td>Y1</td>
+<td>enablers</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>constraint</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>RMI-008</td>
+<td>Deploy Business Continuity service (IR capability and BCP)</td>
+<td>Y1</td>
+<td>enablers</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>deadline (2026-12-01)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>RMI-009</td>
+<td>BCP documentation and IR tabletop exercise</td>
+<td>Y1</td>
+<td>value-drivers</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>deadline (2026-12-01)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>RMI-010</td>
+<td>Pre-assessment audit readiness review (CMP-002)</td>
+<td>Y1</td>
+<td>value-drivers</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>deadline (2026-12-01)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>RMI-011</td>
+<td>Engage legal/regulatory advisory for entity classification (CMP-001)</td>
+<td>Y2</td>
+<td>optimisations</td>
+<td>Izayoi Nayuta (CISO), escalation to Cheng Zebang (CEO)</td>
+<td>deadline (2027-05-26)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>RMI-012</td>
+<td>Information security policy framework refresh</td>
+<td>Y2</td>
+<td>value-drivers</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>deadline (2027-05-26)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>RMI-013</td>
+<td>Compliance attestation programme (CMP-001)</td>
+<td>Y2</td>
+<td>value-drivers</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>deadline (2027-05-26)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>RMI-014</td>
+<td>Sustained operations and annual control review</td>
+<td>Y3</td>
+<td>optimisations</td>
+<td>Izayoi Nayuta (CISO)</td>
+<td>enabler</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="decision-log">Decision Log</h2>
+<table>
+<thead>
+<tr class="header">
+<th>DEC-id</th>
+<th>Decision</th>
+<th>Date</th>
+<th>Decided by</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>—</td>
+<td>No decisions recorded during this engagement</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="assumption-register">Assumption Register</h2>
+<table>
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 14%" />
+<col style="width: 16%" />
+<col style="width: 10%" />
+<col style="width: 18%" />
+<col style="width: 28%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>ASM-id</th>
+<th>Assumption</th>
+<th>Confidence</th>
+<th>Status</th>
+<th>Revalidation</th>
+<th>Invalidates if wrong</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ASM-001</td>
+<td>No earlier national supervisory authority enforcement date exists requiring attestation before the 12-month horizon</td>
+<td>M</td>
+<td>Validated in phase 01 — no supervisory authority contact received</td>
+<td>No longer required</td>
+<td>NIS2 attestation horizon may be shorter than planned</td>
+</tr>
+<tr class="even">
+<td>ASM-002</td>
+<td>MSP is contracted and resourced to deliver security controls beyond internal IT team basics; exact responsibility split deferred to phase 03-mapping</td>
+<td>M</td>
+<td>Open — not explicitly resolved in phase 03</td>
+<td>Yes — flag for revalidation before procurement commitment</td>
+<td>Internal IT team bears more delivery responsibility than scoped</td>
+</tr>
+<tr class="odd">
+<td>ASM-003</td>
+<td>TISAX assessment is at Assessment Level 2 (AL2); if AL3, scope increases materially</td>
+<td>M</td>
+<td>Confirmed in phase 01 — TISAX is at AL2</td>
+<td>No further revalidation required</td>
+<td>TISAX scope and effort increase materially</td>
+</tr>
+</tbody>
+</table>
+<h2 id="risk-log">Risk Log</h2>
+<table>
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 11%" />
+<col style="width: 21%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 21%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>RSK-id</th>
+<th>Risk</th>
+<th>Likelihood</th>
+<th>Impact</th>
+<th>Status</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>RSK-001</td>
+<td>TISAX AL2 assessment failure — December 2026</td>
+<td>H</td>
+<td>H</td>
+<td>open</td>
+<td>Accelerate IR and policy workstreams; prioritise all TISAX-gating items for delivery before October 2026 to allow a pre-assessment dry run (RMI-008, RMI-009, RMI-010)</td>
+</tr>
+<tr class="even">
+<td>RSK-002</td>
+<td>NIS2 compliance failure within 12-month horizon</td>
+<td>H</td>
+<td>H</td>
+<td>open</td>
+<td>Deploy SIEM, Business Continuity, and IR process as highest-priority items (RMI-006, RMI-008); validate entity classification (RMI-011); attestation programme (RMI-013)</td>
+</tr>
+<tr class="odd">
+<td>RSK-003</td>
+<td>Repeat ransomware attack due to unresolved detection and response gaps</td>
+<td>H</td>
+<td>H</td>
+<td>open</td>
+<td>Reinstate Mail Security and Device Hardening immediately (RMI-001, RMI-002); deploy SIEM by end Q2 Y1 (RMI-006); IR process and tabletop by Q3 Y1 (RMI-008, RMI-009)</td>
+</tr>
+<tr class="even">
+<td>RSK-004</td>
+<td>Security regression from contract expiry (Device Hardening, Mail Security, IT Change Mgmt)</td>
+<td>M</td>
+<td>H</td>
+<td>open</td>
+<td>Confirm renewal decisions Q1 Y1 (RMI-001, RMI-002, RMI-003); annual review prevents recurrence (RMI-014)</td>
+</tr>
+<tr class="odd">
+<td>RSK-005</td>
+<td>IAM control effectiveness undermined by organisational resistance to MFA</td>
+<td>M</td>
+<td>H</td>
+<td>open</td>
+<td>CEO sponsorship, firm enforcement deadline (end Q2 Y1), change-management workstream (RMI-005)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="contradictions-surfaced-this-phase">Contradictions Surfaced This Phase</h2>
+<table>
+<thead>
+<tr class="header">
+<th>CON-id</th>
+<th>Contradiction</th>
+<th>Status</th>
+<th>Resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>—</td>
+<td>No contradictions surfaced or outstanding</td>
+<td>resolved</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table>
+<h2 id="hitl-confirmation-record">HITL Confirmation Record</h2>
+<table>
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 26%" />
+<col style="width: 58%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Gate</th>
+<th>Timestamp</th>
+<th>Consultant confirmation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Gate 1 — entry confirm</td>
+<td>2026-05-26T12:00:00Z</td>
+<td>All six entry checklist items confirmed YES</td>
+</tr>
+<tr class="even">
+<td>Gate 3 — ratification</td>
+<td>2026-05-26T12:30:00Z</td>
+<td>Consultant confirmed YES — handover.md ratified</td>
+</tr>
+</tbody>
+</table>
+
+</main>
+
+</body>
+</html>

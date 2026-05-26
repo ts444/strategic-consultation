@@ -1,0 +1,581 @@
+{
+  "project": "Strategic Consulting Harness",
+  "branchName": "ralph/strategic-consulting-harness",
+  "description": "Knowledge-intensive Claude Code harness that conducts strategic IT consulting for MSP customers and produces a 3-year roadmap. Operates as phase-bounded invocations against a per-engagement git repo, with read-only MCP access to the MSP portfolio (Obsidian) and customer-portal (HTTP API), specialist subagents with isolated contexts, and a deterministic validator that enforces design principles structurally. Build order: repo skeleton, schemas and templates, validator, MCP servers, subagent and orchestrator prompts, CLI, observability, then a tracer-bullet engagement and first retro shipped as v0.2.0.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Harness repo skeleton and versioning",
+      "description": "As a developer, I want the harness repo directory structure in place so all subsequent work has a canonical home.",
+      "acceptanceCriteria": [
+        "Directories exist: templates/, prompts/orchestrator/, prompts/subagents/, validator/rules/, mcp/portfolio-mcp/, mcp/customer-mcp/, harness/, backlog/change-requests/",
+        "CHANGELOG.md initialised at 0.1.0",
+        "README.md describes the structure in one screen and references design-principles.md as binding",
+        "design-principles.md remains at repo root as canonical (file already present)",
+        "Git tag 0.1.0 created on first commit"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: directories, CHANGELOG.md at 0.1.0, README.md, design-principles.md at root, git tag 0.1.0."
+    },
+    {
+      "id": "US-002",
+      "title": "Claim atom and composed-block schema",
+      "description": "As a developer, I want one schema doc that defines the atomic claim and the composed blocks so every template and validator rule references one source of truth.",
+      "acceptanceCriteria": [
+        "templates/_claim.schema.md exists and defines the claim atom with mandatory [label] [source] [conf:H|M|L]",
+        "Four labels enumerated: known | inferred | elicited | assumed, each with its producer-binding rule",
+        "Source URI shapes defined: portfolio://<domain>/<file>.md@<sha>, customer-portal://<resource>/<id>@<updated_at>, interview:<date>/consultant, from: A + B",
+        "Composed block schemas defined: gap, recommendation, risk, roadmap-item, with mandatory fields per Q5/Q8",
+        "Confidence-propagation rule stated: composed claim conf <= min(input confs)",
+        "At least one worked example per block type included inline"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: templates/_claim.schema.md defines claim atom, four labels with producer bindings, source URI shapes, four composed block schemas (gap/recommendation/risk/roadmap-item) with mandatory fields, confidence-propagation rule, and one worked example per block type."
+    },
+    {
+      "id": "US-003",
+      "title": "Root register schemas",
+      "description": "As a developer, I want schemas for the six root registers so engagement repos have a uniform shape.",
+      "acceptanceCriteria": [
+        "templates/_registers/ contains one schema doc per register: _assumptions.md, _decisions.md, _risks.md, _contradictions.md, _compliance.md, _budget.md",
+        "_contradictions.md schema enforces Status: unresolved | resolved-by-{a|b|c|d}-... and Blocks: <phase>",
+        "_compliance.md schema enforces id CMP-NNN, role: constraint|deadline|enabler, optional deadline iff role=deadline",
+        "_budget.md schema enforces envelope shape (capex/opex per period, renewals, hard limits, soft preferences) and forbids a single 'total' field",
+        "_decisions.md schema supports overrides: <claim-id> pointers for resolution-path (d)",
+        "Each schema includes a worked-example entry"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: templates/_registers/ populated with _assumptions.md, _decisions.md, _risks.md, _contradictions.md, _compliance.md, _budget.md. Each has full entry schema, role semantics, register-level frontmatter shape, and a worked example. _contradictions.md enforces Status unresolved|resolved-by-{a|b|c|d}-* and Blocks field. _compliance.md enforces CMP-NNN id, role constraint|deadline|enabler, deadline required iff role=deadline. _budget.md enforces capex/opex_annual/renewals/hard_limit/soft_preference envelope and explicitly forbids bare total field. _decisions.md supports overrides: <claim-id> for resolution path (d)."
+    },
+    {
+      "id": "US-004",
+      "title": "Phase artifact templates: intake, situation, gap",
+      "description": "As a developer, I want artifact templates for phases 00-02 so the synthesizer fills templates rather than reinventing structure.",
+      "acceptanceCriteria": [
+        "templates/scope.template.md, templates/situation.template.md, templates/gaps.template.md exist",
+        "Each has YAML frontmatter with: phase, status (draft|ratified), harness_version, template (name@version), ratified_by, ratified_at",
+        "Each embeds its exit criteria from Q7 as a comment block",
+        "gaps.template.md mandates compliance_drivers field on every gap block",
+        "Templates reference _claim.schema.md by name"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: templates/scope.template.md (phase 00-intake), templates/situation.template.md (phase 01-situation), templates/gaps.template.md (phase 02-gap). All have YAML frontmatter (phase, status, harness_version, template@version, ratified_by, ratified_at, produced_by). All embed exit criteria as comment blocks referencing Q7 phase contracts. gaps.template.md mandates compliance_drivers on every gap block with explicit validator rule reference and worked examples for both non-empty and empty list cases. All reference _claim.schema.md by name."
+    },
+    {
+      "id": "US-005",
+      "title": "Phase artifact templates: mapping (x2), roadmap",
+      "description": "As a developer, I want artifact templates for phases 03-04 including the split mapping output.",
+      "acceptanceCriteria": [
+        "templates/service-map.template.md (exhaustive) and templates/recommendations.template.md (curated) both exist",
+        "recommendations.template.md mandates compliance_relation, cost, lock_in, opportunity_cost on every recommendation block",
+        "templates/roadmap.template.md exists and mandates a '## Sequencing argument' H2 section",
+        "roadmap.template.md mandates >=1 Y1 quick-win marker",
+        "roadmap.template.md mandates compliance_role, compliance_deadline (iff role=deadline), and budget_envelope on every roadmap item",
+        "All three templates have frontmatter and reference _claim.schema.md"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: templates/service-map.template.md (phase 03-mapping, exhaustive), templates/recommendations.template.md (phase 03-mapping, curated), templates/roadmap.template.md (phase 04-roadmap). All have YAML frontmatter (phase, status, harness_version, template@version, ratified_by, ratified_at, produced_by) and reference _claim.schema.md. recommendations.template.md mandates compliance_relation, cost, lock_in, opportunity_cost on every block with explicit validator rule reference. roadmap.template.md has mandatory '## Sequencing argument' H2, quick_win field on every item with >=1 Y1 quick-win requirement, mandatory compliance_role (constraint|deadline|enabler|none), compliance_deadline required iff role=deadline, and mandatory budget_envelope referencing _budget.md. All exit criteria comment blocks reference Q7 phase contracts and design-principles section numbers."
+    },
+    {
+      "id": "US-006",
+      "title": "Phase artifact templates: handover, retro",
+      "description": "As a developer, I want artifact templates for phases 05-06 closing the seven-phase set.",
+      "acceptanceCriteria": [
+        "templates/handover.template.md exists with sections for executive narrative, roadmap, decision log, assumption register, risk log",
+        "handover.template.md explicitly excludes meta-findings about MSP portal hygiene (comment in template)",
+        "templates/retro.template.md exists with sections: what worked, what failed, what surprised, data-quality findings, change requests",
+        "retro.template.md change-request section references backlog/change-requests/ in the harness repo as the destination",
+        "Both templates have frontmatter consistent with US-004/US-005"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: templates/handover.template.md (phase 05-handover) and templates/retro.template.md (phase 06-retro). handover.template.md has YAML frontmatter, exit criteria embedding MSP portal hygiene exclusion rule, sections for Executive Narrative, Roadmap Summary, Decision Log, Assumption Register, Risk Log, Contradictions, and HITL record. retro.template.md has YAML frontmatter, exit criteria with change-request destination rule (backlog/change-requests/ in harness repo), sections for What Worked, What Failed, What Surprised, Data-Quality Meta-Findings (with \u00a74.1 contradiction stats, \u00a74.2 portfolio observations, \u00a74.3 customer-portal observations), and Change Requests with file naming convention and customer no-anonymisation rule. Both templates consistent with US-004/US-005 frontmatter shape."
+    },
+    {
+      "id": "US-007",
+      "title": "harness init script (engagement repo scaffold)",
+      "description": "As a consultant, I want a single command to create a new engagement repo with the correct layout and version pin.",
+      "acceptanceCriteria": [
+        "harness/init.py accepts <customer-name> and optional --target-dir",
+        "Creates phase directories 00-intake/ through 06-retro/",
+        "Creates empty root registers from US-003 schemas",
+        "Creates engagement CLAUDE.md stub with placeholders: customer name, compliance frameworks, budget envelope shape, stakeholders, harness_version pinned from CHANGELOG.md",
+        "Initialises git in the engagement repo and commits the scaffold",
+        "Refuses to overwrite an existing non-empty target directory and exits non-zero with a clear error",
+        "Unit tests cover: scaffold layout correct, version pin matches CHANGELOG, refusal on non-empty target",
+        "ruff check passes and mypy passes on new code"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: harness/init.py accepts <customer-name> and optional --target-dir. Creates phase dirs 00-intake/ through 06-retro/, empty root registers from US-003 schemas, engagement CLAUDE.md stub with customer name + version pin + compliance/budget/stakeholder placeholders. Initialises git and commits scaffold. Refuses non-empty target with exit code 1. 12 unit tests cover layout, version pin, refusal, git init. ruff + mypy clean."
+    },
+    {
+      "id": "US-008",
+      "title": "Validator CLI skeleton + core claim rules",
+      "description": "As a developer, I want a deterministic validator CLI with the core claim-level rules so structural enforcement begins.",
+      "acceptanceCriteria": [
+        "validator/cli.py exposes 'validate <artifact-path>' and exits non-zero on violation",
+        "Rules implemented as separate files under validator/rules/: claim_label_present.py, claim_source_present.py, claim_confidence_present.py, frontmatter_required_fields.py",
+        "Each rule has unit tests with at least one passing fixture and one failing fixture",
+        "CLI groups errors by rule for skimmability",
+        "ruff check passes and mypy passes",
+        "Tests pass (pytest)"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: validator/__init__.py (Violation dataclass), validator/_util.py (body_lines/frontmatter_keys utilities), validator/cli.py (validate <artifact-path>, groups by rule, exits non-zero), four rule files under validator/rules/, and 22 unit tests in validator/tests/test_rules.py. ruff + mypy clean, 34 tests pass total."
+    },
+    {
+      "id": "US-009",
+      "title": "Validator: producer binding, confidence propagation, template conformance",
+      "description": "As a developer, I want validator rules that enforce label-producer binding, confidence propagation, and template conformance.",
+      "acceptanceCriteria": [
+        "validator/rules/label_producer_binding.py rejects claims where label does not match the producing subagent recorded in trace or frontmatter",
+        "validator/rules/confidence_propagation.py rejects composed claims whose conf > min(input confs)",
+        "validator/rules/template_conformance.py rejects artifacts missing H2 sections required by their template",
+        "Each rule has unit tests (passing and failing fixtures)",
+        "CLI runs all rules and reports per-rule",
+        "ruff check passes and mypy passes",
+        "Tests pass"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: label_producer_binding.py (checks produced_by frontmatter against allowed labels per _claim.schema.md \u00a71.2), confidence_propagation.py (parses YAML blocks inside ```yaml fences, builds block_id.field\u2192conf map, rejects composed claims with conf > min(input confs)), template_conformance.py (checks required H2 sections per template name; roadmap\u2192'## Sequencing argument', gaps\u2192'## 1. Goal Coverage Map'). Added frontmatter_value() helper to _util.py. CLI updated to run all 7 rules. 40 tests pass, ruff + mypy clean."
+    },
+    {
+      "id": "US-010",
+      "title": "Validator: gap, recommendation, roadmap-item required fields",
+      "description": "As a developer, I want validator rules that enforce the compliance/budget mandatory fields on the three structured block types.",
+      "acceptanceCriteria": [
+        "validator/rules/gap_compliance_drivers_field.py rejects gaps missing compliance_drivers (empty list OK); rejects broken CMP-id pointers",
+        "validator/rules/recommendation_required_fields.py rejects recommendations missing any of compliance_relation, cost, lock_in, opportunity_cost ('none' is valid; absence is not)",
+        "validator/rules/roadmap_item_required_fields.py rejects items missing compliance_role; rejects items with role=deadline lacking compliance_deadline; rejects budget_envelope references not declared in _budget.md",
+        "Each rule has unit tests (passing and failing fixtures)",
+        "ruff check passes and mypy passes",
+        "Tests pass"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: gap_compliance_drivers_field.py (rejects GAP blocks missing compliance_drivers field; checks CMP-NNN refs against _compliance.md when register exists), recommendation_required_fields.py (rejects REC blocks missing any of compliance_relation/cost/lock_in/opportunity_cost; 'none'/'tbc' valid), roadmap_item_required_fields.py (rejects RMI blocks missing compliance_role; rejects deadline role without compliance_deadline; rejects non-deadline with compliance_deadline; rejects missing budget_envelope; checks BUD-NNN refs against _budget.md; rejects roadmap with no Y1 quick_win:true). Added parse_yaml_blocks() helper to _util.py. CLI updated to run all 10 rules. 20 new tests (60 total pass). ruff + mypy clean."
+    },
+    {
+      "id": "US-011",
+      "title": "Validator: framework-name guard + claim composition resolvable",
+      "description": "As a developer, I want validator rules that enforce structured-fields-only framework naming and verify composition graph resolvability.",
+      "acceptanceCriteria": [
+        "validator/rules/framework_name_in_structured_fields.py rejects bare framework names (GDPR, NIS2, ISO27001, DORA, etc.) appearing in titles or structured fields; tolerates them in narrative prose paragraphs",
+        "validator/rules/claim_composition_resolvable.py verifies every 'from: A + B' references claim ids in scope (current artifact or prior ratified artifacts)",
+        "Framework name list is configurable and defaults to a sensible starter set",
+        "Each rule has unit tests (passing and failing fixtures)",
+        "ruff check passes and mypy passes",
+        "Tests pass"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: framework_name_in_structured_fields.py (rejects GDPR/NIS2/ISO27001/DORA/etc. in headings and YAML structured fields; tolerates in narrative prose; configurable FRAMEWORK_NAMES list), claim_composition_resolvable.py (parses from: A + B refs, resolves claim ids from current artifact + prior ratified phase artifacts in engagement repo layout, skips non-structured refs). CLI updated to run all 12 rules. 11 new tests (71 total pass). ruff + mypy clean."
+    },
+    {
+      "id": "US-012",
+      "title": "Portfolio MCP server (read-only, service-shaped)",
+      "description": "As a developer, I want a read-only MCP server wrapping ~/msp-portfolio so the agent has narrow named tools instead of grep.",
+      "acceptanceCriteria": [
+        "mcp/portfolio-mcp/ implements tools: list_domains(), list_services_in_domain(domain), read_service(name), search_services(query), head(name)",
+        "No write tools exposed",
+        "Every response embeds the source URI: portfolio://<domain>/<file>.md@<git-sha-or-mtime>",
+        "search_services returns at most N hits each with citation; never returns raw greps",
+        "head() returns git sha (if portfolio is a git repo) else mtime; used for freshness checks",
+        "Smoke test: server starts and answers list_domains() against live ~/msp-portfolio returning at least Governance, Infrastructure, Network, Security, Workplace",
+        "ruff check passes and mypy passes",
+        "Tests pass"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: mcp/portfolio-mcp/server.py implements list_domains(), list_services_in_domain(domain), read_service(name), search_services(query, max_hits=10), head(name). All read-only. Every response embeds portfolio://<domain>/<file>.md@<ref> source URI (git sha if portfolio is a git repo, else mtime). search_services returns snippets with citations, never raw greps. mcp/portfolio-mcp/__main__.py is the MCP JSON-RPC 2.0 stdio server. Smoke test passes against live ~/msp-portfolio returning Governance/Infrastructure/Network/Security/Workplace. 16 tests (99 total pass). ruff + mypy clean. Note: directory uses hyphens so mypy must be run via MYPYPATH; conftest.py handles sys.path for tests."
+    },
+    {
+      "id": "US-013",
+      "title": "Customer-portal read-only HTTP API",
+      "description": "As a developer, I want the existing customer-portal to expose a read-only HTTP API so customer data has a single authoritative shape.",
+      "acceptanceCriteria": [
+        "New route group in ~/customer-portal/app/api/ exposes endpoints: /api/customers/:id/assets, /api/customers/:id/contracts, /api/customers/:id/compliance-posture",
+        "API uses a read-only Postgres role (separate DB user with SELECT only) configured via env var",
+        "All responses include updated_at on each resource",
+        "Auth: single shared bearer token via env var (single-consultant assumption)",
+        "Smoke test (curl or supertest) against each endpoint returns expected shape for all three already-seeded customers (small, medium, large)",
+        "Typecheck passes (tsc)",
+        "Existing customer-portal tests still pass"
+      ],
+      "priority": 13,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: added updatedAt @updatedAt @default(now()) to Asset and ContractedService Prisma models; prisma db push applied; lib/prisma-readonly.ts uses READONLY_DATABASE_URL env var (falls back to DATABASE_URL); lib/api-auth.ts checks Authorization: Bearer <API_BEARER_TOKEN>; three route files under app/api/customers/[id]/{assets,contracts,compliance-posture}/route.ts; compliance-posture derives domain-grouped view from contracted services; scripts/smoke-test-api.sh passes 13/13 checks against live DB with all three seeded customers; tsc --noEmit clean."
+    },
+    {
+      "id": "US-014",
+      "title": "Customer-data MCP server (wraps HTTP API)",
+      "description": "As a developer, I want a thin MCP server wrapping the customer-portal HTTP API so the agent's tool surface is uniform.",
+      "acceptanceCriteria": [
+        "mcp/customer-mcp/ exposes narrow typed tools: list_assets(customer_id), list_contracts(customer_id), compliance_posture(customer_id), head(resource_type, id)",
+        "Every response embeds customer-portal://<resource>/<id>@<updated_at>",
+        "No write tools",
+        "Bearer token read from env var",
+        "Smoke test: lists assets for a seeded customer via the HTTP API",
+        "ruff check passes and mypy passes",
+        "Tests pass"
+      ],
+      "priority": 14,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: mcp/customer-mcp/customer_server.py implements list_assets(customer_id), list_contracts(customer_id), compliance_posture(customer_id), head(resource_type, customer_id). All read-only. Every response embeds customer-portal://<resource>/<id>@<updated_at> source URI. mcp/customer-mcp/__main__.py is the MCP JSON-RPC 2.0 stdio server. Bearer token read from CUSTOMER_PORTAL_BEARER_TOKEN env var; portal URL from CUSTOMER_PORTAL_URL. Live smoke test passes against port 3004. 21 tests (20 pass, 1 skipped unless env vars set; 119 total pass across suite). ruff + mypy clean. Note: server file named customer_server.py (not server.py) to avoid collision with portfolio-mcp/server.py when both are in sys.path. Root conftest.py handles sys.path for both MCP test suites; test dirs use no __init__.py."
+    },
+    {
+      "id": "US-015",
+      "title": "decay_check tool",
+      "description": "As a consultant, I want a single command to surface stale claims at phase entry so revalidation is structured.",
+      "acceptanceCriteria": [
+        "harness/decay_check.py <engagement-repo> reads all root registers and prior ratified artifacts",
+        "Implements [known] decay: re-resolves source URIs against MCPs via head(); auto re-retrieves changed sources; silently bumps timestamp for unchanged sources and logs to _trace.jsonl",
+        "Implements [elicited] decay: phase-distance x confidence (H=3 phases, M=2, L=1; configurable via harness config)",
+        "Implements [inferred]/[assumed] decay: cascades from input changes and honours requires_revalidation flag (default true)",
+        "Output grouped: HARD STALE, ELICITED DUE FOR REVALIDATION, ASSUMPTIONS FLAGGED, DOWNSTREAM IMPACT",
+        "Tests use a synthetic engagement repo with seeded stale claims of each type",
+        "ruff check passes and mypy passes",
+        "Tests pass"
+      ],
+      "priority": 15,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: harness/decay_check.py implements run_decay_check() with four decay types: (1) [known] \u2014 re-resolves portfolio:// and customer-portal:// URIs via injectable head_portfolio/head_customer callables; flags HARD STALE on ref change, silently logs to _trace.jsonl on unchanged; (2) [elicited] \u2014 phase-distance \u00d7 confidence thresholds (H=3, M=2, L=1 configurable); (3) [assumed] \u2014 reads _assumptions.md YAML blocks, flags entries with requires_revalidation:true past phase_expires; (4) downstream cascade \u2014 [inferred]/[assumed] claims composed from stale IDs flagged as DOWNSTREAM IMPACT. CLI accepts engagement-repo and --current-phase (auto-detected if absent), exits non-zero on any stale finding. 29 tests, 148 total pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-016",
+      "title": "harness explain claim traversal tool",
+      "description": "As a consultant, I want to walk any claim back to its facts and assumptions so traceability is operational.",
+      "acceptanceCriteria": [
+        "harness/explain.py <engagement-repo> <claim-id> walks the claim graph via 'from: A + B' composition",
+        "Output is a tree: claim -> inputs -> ... -> leaf facts ([known], [elicited]) with sources and timestamps",
+        "Surfaces decisions in _decisions.md whose overrides: pointer hits any claim in the chain",
+        "Tests: seeded artifact set with known traversal expected output",
+        "ruff check passes and mypy passes",
+        "Tests pass"
+      ],
+      "priority": 16,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: harness/explain.py provides explain_claim(repo, claim_id) and format_result(). Walks composed claims via 'from: A + B' recursively to leaf [known]/[elicited] facts; detects cycles (marks is_cycle=True) and missing inputs (marks missing=True); diamond DAGs (same claim reachable via multiple paths) are not treated as cycles. Surfaces Decision entries from _decisions.md whose overrides: field intersects the traversal chain. Output tree uses 2-space indentation showing claim id, label, conf, source URI, and artifact:lineno. CLI exits 0 on success, 1 on missing claim or bad repo path. 27 tests pass (175 total). ruff + mypy clean."
+    },
+    {
+      "id": "US-017",
+      "title": "Intake phase orchestrator prompt",
+      "description": "As a developer, I want the intake phase orchestrator prompt so the first phase can be driven end-to-end.",
+      "acceptanceCriteria": [
+        "prompts/orchestrator/00-intake.md exists",
+        "Prompt encodes: read engagement CLAUDE.md; announce plan; HITL gate 1 (entry confirm); invoke interviewer subagent; produce scope.md; run validator; HITL gate 3 (ratification)",
+        "Prompt whitelists allowed subagents for intake (interviewer only; no retrievers)",
+        "Prompt references the scope template by version pin (template: scope@<version>)",
+        "Prompt forbids tool access beyond the whitelisted subagents",
+        "Includes the bounded-retry policy from Q9 (synthesizer retry max 2)"
+      ],
+      "priority": 17,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: prompts/orchestrator/00-intake.md encodes full seven-step orchestrator loop (read CLAUDE.md, announce plan, HITL gate 1, invoke interviewer subagent, produce scope.md, run validator with max-2 retries, HITL gate 3 ratification). Whitelists interviewer only; forbids portfolio-retriever, customer-data-retriever, synthesizer. References template scope@1.0.0. Forbids direct tool access beyond whitelisted subagents. Bounded-retry policy: max 2 retries on validator/synthesis before escalating. All 175 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-018",
+      "title": "Retriever subagent prompts (portfolio + customer-data)",
+      "description": "As a developer, I want system prompts for the two retriever subagents so the orchestrator can delegate retrieval.",
+      "acceptanceCriteria": [
+        "prompts/subagents/portfolio-retriever.md exists: tool access limited to portfolio MCP; stamps [known]; stateless per call; returns cited markdown with portfolio:// URIs",
+        "prompts/subagents/customer-data-retriever.md exists: tool access limited to customer MCP; stamps [known]; stateless per call; returns cited markdown with customer-portal:// URIs",
+        "Both prompts name model: Sonnet (never Haiku)",
+        "Both prompts forbid emitting any label other than [known]",
+        "Both prompts forbid synthesis or interpretation; output is fact retrieval only"
+      ],
+      "priority": 18,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: prompts/subagents/portfolio-retriever.md and prompts/subagents/customer-data-retriever.md. Both prompts: model Sonnet (never Haiku); tool access restricted to their respective MCP only; emit [known] label only (forbidden: [elicited], [inferred], [assumed]); stateless per call; return cited markdown with portfolio:// or customer-portal:// source URIs including sha/mtime or updated_at; forbid synthesis or interpretation. portfolio-retriever uses head(name) for freshness; customer-data-retriever uses head(resource_type, customer_id). All 175 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-019",
+      "title": "Interviewer subagent prompt",
+      "description": "As a developer, I want the long-lived interviewer subagent prompt for soft-fact elicitation.",
+      "acceptanceCriteria": [
+        "prompts/subagents/interviewer.md exists",
+        "Prompt declares no tool access (chat only)",
+        "Prompt stamps every captured fact as [elicited] with interview:<date>/consultant source",
+        "Prompt includes periodic in-scope self-check instruction (every N turns, re-check against phase elicitation goals)",
+        "Prompt soft-bounded with threshold warning instruction (at configurable turn counts, prompt orchestrator to surface a 'pause and synthesize?' question)",
+        "Prompt names model: Opus",
+        "Prompt produces a structured final output (claim blocks) when dismissed"
+      ],
+      "priority": 19,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: prompts/subagents/interviewer.md. Model Opus (never Haiku/Sonnet). No tool access (chat only). Stamps every captured fact as [elicited] with interview:<ISO8601-date>/consultant source. Periodic in-scope self-check every 8 turns (internal, not narrated). Soft-bounded: emits [INTERVIEWER-SIGNAL] at turns 20/30/40 for orchestrator to surface 'pause and synthesize?'. Dismissal sequence on: all goals covered, explicit orchestrator dismissal, or turn 40. Structured final output: E-NNN claim blocks with confidence, open questions (OQ-NNN), retriever flags. One question at a time, no synthesis, confidence calibrated from interlocutor's language. All 175 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-020",
+      "title": "Synthesizer subagent prompt",
+      "description": "As a developer, I want the synthesizer subagent prompt that composes facts + elicitations into draft artifacts.",
+      "acceptanceCriteria": [
+        "prompts/subagents/synthesizer.md exists",
+        "Prompt declares no tool access",
+        "Prompt only emits [inferred] or [assumed] labels; forbidden from emitting [known] or [elicited]",
+        "Prompt enforces confidence-propagation rule in its output (composed conf <= min(input confs))",
+        "Prompt requires every composed claim to use from: A + B notation referencing in-scope claim ids",
+        "Prompt names model: Opus",
+        "Prompt produces draft artifact with frontmatter status: draft"
+      ],
+      "priority": 20,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: prompts/subagents/synthesizer.md. Model Opus (never Haiku/Sonnet). No tool access. Emits [inferred] or [assumed] only; [known] and [elicited] are forbidden. Confidence-propagation rule explicitly stated and mandatory (conf(composed) <= min(input confs)). Every [inferred] claim requires from: A + B source notation referencing in-scope claim ids. [assumed] claims require corresponding _assumptions.md entries with requires_revalidation: true and phase_expires. Draft artifact output with status: draft frontmatter. Contradiction handling via [SYNTHESIZER-CONFLICT] annotations. All 175 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-021",
+      "title": "Situation phase orchestrator prompt",
+      "description": "As a developer, I want the situation phase orchestrator so the second phase can run.",
+      "acceptanceCriteria": [
+        "prompts/orchestrator/01-situation.md exists",
+        "Entry condition checked: 00-intake/scope.md frontmatter status: ratified",
+        "Whitelisted subagents: portfolio-retriever, customer-data-retriever, interviewer, synthesizer",
+        "Encodes the seven-step orchestrator loop from Q9",
+        "Produces 01-situation/situation.md",
+        "Exit criteria validated: validator green AND zero unresolved entries in _contradictions.md blocking this phase",
+        "Includes the bounded-retry policy"
+      ],
+      "priority": 21,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: prompts/orchestrator/01-situation.md encodes full nine-step orchestrator loop (read context + entry condition check, announce plan, HITL gate 1, portfolio-retriever, customer-data-retriever, interviewer, check_contradictions, synthesizer, validator max-2 retries, HITL gate 3 ratification). Whitelists all four subagents. Entry condition: scope.md must have status: ratified. Contradiction blocking: synthesis blocked while any Blocks: 01-situation entry is unresolved. Bounded-retry policy: max 2 retries. Exit criteria enforce all-goals-covered, both retrievers invoked with URIs in _sources.jsonl, >=3 elicited claims, zero unresolved contradictions, validator green. All 175 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-022",
+      "title": "Gap analysis phase orchestrator prompt",
+      "description": "As a developer, I want the gap analysis phase orchestrator.",
+      "acceptanceCriteria": [
+        "prompts/orchestrator/02-gap.md exists",
+        "Entry condition: 01-situation/situation.md ratified",
+        "Whitelisted subagents: synthesizer (primary), retrievers as needed",
+        "Produces 02-gap/gaps.md",
+        "Exit criteria: every declared goal in scope.md is either addressed by >=1 gap or explicitly marked 'no gap' with reasoning; validator green; no blocking contradictions",
+        "Encodes seven-step loop and bounded retries"
+      ],
+      "priority": 22,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: prompts/orchestrator/02-gap.md encodes seven-step orchestrator loop (read context + entry condition, announce plan, HITL gate 1, supplementary retrieval + contradiction check, synthesizer, validator max-2 retries, HITL gate 3 ratification). Entry condition: situation.md status: ratified. Whitelisted: synthesizer (primary), portfolio-retriever and customer-data-retriever (supplementary only); interviewer forbidden. Synthesis blocked while any Blocks: 02-gap contradiction is unresolved. Exit criteria enforce every G-0N goal addressed or no-gap in \u00a73, compliance_drivers mandatory on every GAP block, validator green. All 175 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-023",
+      "title": "Mapping phase orchestrator prompt (dual output)",
+      "description": "As a developer, I want the mapping phase orchestrator producing both service-map and recommendations.",
+      "acceptanceCriteria": [
+        "prompts/orchestrator/03-mapping.md exists",
+        "Entry condition: 02-gap/gaps.md ratified",
+        "Whitelisted subagents: portfolio-retriever (heavy), synthesizer",
+        "Produces 03-mapping/service-map.md (exhaustive, every gap x candidate services) AND 03-mapping/recommendations.md (curated subset)",
+        "Exit criteria: every gap has >=1 mapping entry (including 'no service applies' with reasoning per Q3/Q4); every service in service-map has fit rationale; recommendations validator-green; no blocking contradictions",
+        "Encodes seven-step loop and bounded retries"
+      ],
+      "priority": 23,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: prompts/orchestrator/03-mapping.md encodes seven-step orchestrator loop (read context + entry condition, announce plan, HITL gate 1, portfolio-retriever for every gap, contradiction check, two-pass synthesizer [service-map then recommendations], validator on both, HITL gate 3 ratification). Entry condition: gaps.md status: ratified. Whitelisted: portfolio-retriever (heavy, every gap), synthesizer; interviewer and customer-data-retriever forbidden. Dual-artifact sequencing enforced: service-map.md must be validator-green before recommendations synthesis begins. Exit criteria: every gap has >=1 MAP entry (including [no-known-service]); all four mandatory REC fields present; no bare framework names; validator green on both; no blocking contradictions. All 175 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-024",
+      "title": "Roadmap phase orchestrator prompt",
+      "description": "As a developer, I want the roadmap phase orchestrator producing the sequencing argument.",
+      "acceptanceCriteria": [
+        "prompts/orchestrator/04-roadmap.md exists",
+        "Entry condition: 03-mapping/recommendations.md ratified",
+        "Whitelisted subagents: synthesizer (primary), retrievers as needed",
+        "Produces 04-roadmap/roadmap.md with sequencing-argument H2, capability phases (foundations/enablers/value-drivers/optimisations), calendar projection, owners, risks, mitigations",
+        "Exit criteria: every Y1 item traceable to >=1 gap; >=1 quick-win Y1 item; every compliance item categorised; validator green",
+        "Encodes seven-step loop and bounded retries"
+      ],
+      "priority": 24,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: prompts/orchestrator/04-roadmap.md encodes seven-step orchestrator loop (read context + entry condition, announce plan, HITL gate 1, supplementary retrieval + contradiction check, synthesizer, validator max-2 retries, HITL gate 3 ratification). Entry condition: recommendations.md status: ratified. Whitelisted: synthesizer (primary), portfolio-retriever and customer-data-retriever (supplementary only); interviewer forbidden. Mandatory ## Sequencing argument H2 with written justification. RMI blocks require compliance_role, budget_envelope, quick_win (>=1 Y1 quick_win:true); compliance_deadline required iff role=deadline. Every REC-NNN must be addressed by >=1 RMI. Calendar projection \u00a73 covers Y1-Y3. Synthesis blocked while Blocks: 04-roadmap contradictions unresolved. No bare framework names. All 175 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-025",
+      "title": "Handover phase orchestrator prompt",
+      "description": "As a developer, I want the handover phase orchestrator producing the customer-facing bundle.",
+      "acceptanceCriteria": [
+        "prompts/orchestrator/05-handover.md exists",
+        "Entry condition: 04-roadmap/roadmap.md ratified",
+        "Whitelisted subagents: synthesizer",
+        "Produces 05-handover/handover.md bundling executive narrative, roadmap, decision log, assumption register, risk log",
+        "Prompt explicitly forbids inclusion of meta-findings about MSP portal hygiene (defers to retro)",
+        "Exit criteria: validator green; customer-facing bundle reviewed by consultant"
+      ],
+      "priority": 25,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: prompts/orchestrator/05-handover.md encodes seven-step orchestrator loop (read context + entry condition, announce plan, HITL gate 1, contradiction check, synthesizer, validator max-2 retries, HITL gate 3 ratification). Entry condition: roadmap.md status: ratified. Whitelisted: synthesizer only; portfolio-retriever, customer-data-retriever, and interviewer forbidden. MSP portal hygiene exclusion enforced throughout: handover.md is customer-facing; any meta-findings about portfolio data quality or harness tooling are forbidden and must go to retro. Executive narrative grounds every assertion in prior ratified claim ids with confidence propagation. All five mandatory sections enforced: Executive Narrative, Roadmap Summary, Decision Log, Assumption Register, Risk Log. DEC-NNN overrides: pointers must be reproduced verbatim. No new elicitation or retrieval. Contradiction blocking while Blocks: 05-handover unresolved. No new code; prompt markdown only; all 175 tests still pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-026",
+      "title": "Retro phase orchestrator prompt",
+      "description": "As a developer, I want the retro phase orchestrator producing change requests into the harness repo backlog.",
+      "acceptanceCriteria": [
+        "prompts/orchestrator/06-retro.md exists",
+        "Entry condition: 05-handover/handover.md ratified",
+        "Whitelisted subagents: synthesizer",
+        "Produces 06-retro/retro.md (engagement-side record) AND emits change-request files into <harness-repo>/backlog/change-requests/ (CR-YYYY-NNN.md per request) naming the originating customer/engagement directly (no anonymisation)",
+        "Includes data-quality meta-findings (contradiction rate, (c)-resolution rate) in retro.md",
+        "Exit criteria: validator green; change requests written and committed in the harness repo"
+      ],
+      "priority": 26,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "harness enter_phase CLI entry point",
+      "description": "As a consultant, I want a single command that figures out the current phase from repo state and invokes Claude Code with the right context.",
+      "acceptanceCriteria": [
+        "harness/enter_phase.py run from inside an engagement repo accepts optional --phase NN and --rerun flags",
+        "Default behaviour: determines next phase from which 0N-*/ directories have ratified artifacts (frontmatter status: ratified)",
+        "Verifies engagement CLAUDE.md harness_version matches current CHANGELOG.md version",
+        "On version mismatch: surfaces choice (pin to original / upgrade / abort); never silently upgrades",
+        "Invokes claude with the appropriate orchestrator prompt loaded and correct CWD",
+        "Appends invocation metadata (timestamp, phase, model, prompt hash) to 0N-<name>/_trace.jsonl",
+        "Unit tests: phase detection from synthetic repo states; version-mismatch decision branches",
+        "ruff check passes and mypy passes",
+        "Tests pass"
+      ],
+      "priority": 27,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: harness/enter_phase.py already existed with full implementation. Added harness/tests/test_enter_phase.py with 33 tests covering _is_ratified, _detect_next_phase, _read_engagement_version, _resolve_phase, _upgrade_engagement_version, _handle_version_mismatch (pin/upgrade/abort/non-interactive), _append_trace (creates, append-only, missing prompt), and main() dry-run branches (phase detection, specific phase, all-done, version mismatch, missing repo, unknown phase, rerun). All 208 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-028",
+      "title": "Contradiction-handling tool with blocking semantics",
+      "description": "As a consultant, I want contradictions to block synthesis and present the four resolution paths.",
+      "acceptanceCriteria": [
+        "harness/check_contradictions.py <engagement-repo> detects collisions across three types: hard<->hard, hard<->soft, soft<->soft (excluding explicit supersessions)",
+        "Detection works by subject+predicate matching across all in-scope claims",
+        "New contradictions written as structured blocks in _contradictions.md with Status: unresolved and Blocks: <phase>",
+        "Orchestrator prompts invoke this tool in step 4 (before synthesis); non-empty unresolved-blocking list halts the phase",
+        "Resolution paths recorded explicitly when consultant chooses: (a) source-update placeholder; (b) supersedes: <claim-id> marker on new elicited claim; (c) new entry in _assumptions.md with basis citing both contradicting claims; (d) entry in _decisions.md with overrides: <claim-id>",
+        "Tests: seeded contradicting claim pair triggers block; each resolution path correctly clears the block",
+        "ruff check passes and mypy passes",
+        "Tests pass"
+      ],
+      "priority": 28,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: harness/check_contradictions.py with _parse_contradictions_register(), _extract_claim_atoms(), _detect_new_contradictions() (subject+predicate overlap + polarity matching), _collision_type() (hard<->hard/hard<->soft/soft<->soft), _write_new_contradictions(), _blocking_entries(), resolve_contradiction() (paths a/b/c/d), run_check_contradictions(), and CLI main(). 51 unit tests in harness/tests/test_check_contradictions.py. All 259 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-029",
+      "title": "Observability: trace + sources logging",
+      "description": "As a consultant, I want to watch what the agent is doing in real time and audit afterwards.",
+      "acceptanceCriteria": [
+        "Shared logging utility in harness/observability.py used by all subagent invocations and tool calls",
+        "Every subagent invocation appends a line to 0N-<name>/_trace.jsonl with: timestamp, subagent, model, prompt hash, input hash, output hash, duration_ms",
+        "Every retriever tool call appends to 0N-<name>/_sources.jsonl with: timestamp, tool, source URI",
+        "Files are append-only (never rewritten)",
+        "Validator emits a soft warning (non-blocking) on phase ratification if trace is empty",
+        "Tests: utility appends correctly; format is parseable as JSONL",
+        "ruff check passes and mypy passes",
+        "Tests pass"
+      ],
+      "priority": 29,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: harness/observability.py with append_trace_event() and append_source_event(). Both functions append JSON lines to _trace.jsonl and _sources.jsonl (append-only via mode='a'). Added Warning dataclass to validator/__init__.py. Created validator/rules/trace_populated.py \u2014 soft-warning (non-blocking) rule that fires if _trace.jsonl is missing or empty in the artifact's phase dir. Updated validator/cli.py to run warn-checkers and display [WARN:rule] headers separately from hard violations; exit code unchanged (0 on warnings only). 11 observability tests + 6 trace_populated tests; all 276 tests pass; ruff + mypy clean."
+    },
+    {
+      "id": "US-030",
+      "title": "Tracer-bullet: engagement scaffold + intake phase (medium seeded customer)",
+      "description": "As the harness author, I want to bootstrap an engagement against the medium seeded customer in customer-portal and run intake end-to-end.",
+      "acceptanceCriteria": [
+        "Engagement created at ~/engagements/<medium-customer-name>/ via harness init, pointing at the medium seeded customer in the customer-portal Postgres",
+        "Engagement CLAUDE.md populated with: customer name, NIS2 + ISO27001 frameworks declared, sample budget envelope shape, 2-3 stakeholders, harness_version pinned",
+        "00-intake phase run via harness enter_phase; interviewer elicits scope from a human-or-scripted stand-in",
+        "00-intake/scope.md produced, validator-green, ratified (frontmatter status: ratified)",
+        "_trace.jsonl populated for phase 00",
+        "Git history shows scaffold commit + intake ratification commit"
+      ],
+      "priority": 30,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: engagement scaffolded at ~/engagements/meridian-logistics/ via harness init. CLAUDE.md populated with NIS2 + ISO27001 frameworks, \u20ac80k/\u20ac35k budget envelope, 3 stakeholders. _compliance.md: CMP-001 to CMP-004. _budget.md: BUD-001 (Y1 security) and BUD-002 (infrastructure multi-year). _assumptions.md: ASM-001 to ASM-003. 00-intake/scope.md: ratified, validator-green, 3 goals (NIS2 compliance, ISO27001 certification, network modernisation for WMS), 4 OQs for phase 01, HITL gates recorded. 00-intake/_trace.jsonl: orchestrator + interviewer invocation records. Engagement git history: scaffold commit + intake ratification commit."
+    },
+    {
+      "id": "US-031",
+      "title": "Tracer-bullet: situation phase",
+      "description": "As the harness author, I want to run the situation phase on the synthetic engagement and exercise both retrievers + interviewer.",
+      "acceptanceCriteria": [
+        "01-situation phase run on the medium-customer engagement",
+        "Both retrievers invoked at least once; portfolio:// and customer-portal:// URIs appear in _sources.jsonl",
+        "Interviewer elicits at least 3 [elicited] claims",
+        "01-situation/situation.md produced, validator-green, ratified",
+        "decay_check run at entry of next phase shows expected HARD STALE/elicited revalidation outputs (or empty if all fresh)",
+        "_trace.jsonl populated for phase 01"
+      ],
+      "priority": 31,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: situation.md ratified and validator-green (produced_by: synthesizer, 10 [inferred] + 1 [assumed] claims). interviewer-output.md contains 6 [elicited] claims (SIT-007 to SIT-012). _sources.jsonl has 4 portfolio:// and 3 customer-portal:// URIs from both retriever tool calls. _trace.jsonl has 5 events (orchestrator, portfolio-retriever, customer-data-retriever, interviewer, synthesizer). decay_check shows all claims fresh. _risks.md updated with RSK-001 to RSK-004. Engagement commit: 64d6e00."
+    },
+    {
+      "id": "US-032",
+      "title": "Tracer-bullet: gap + mapping phases (including contradiction + [no-known-service])",
+      "description": "As the harness author, I want phases 02 and 03 to produce gaps, exercise the contradiction handler, and emit at least one [no-known-service] placeholder.",
+      "acceptanceCriteria": [
+        "02-gap/gaps.md produced, validator-green, ratified; every scope goal mapped to >=1 gap or explicit 'no gap'",
+        "At least one contradiction (hard<->soft or hard<->hard) is triggered intentionally and resolved via path (d) \u2014 entry appears in _decisions.md with overrides: pointer",
+        "03-mapping/service-map.md and 03-mapping/recommendations.md produced, both validator-green, both ratified",
+        "service-map.md contains at least one [no-known-service] placeholder for a gap with no portfolio match (proves \u00a74 'recommend against MSP services')",
+        "Every recommendation in recommendations.md has compliance_relation, cost, lock_in, opportunity_cost populated"
+      ],
+      "priority": 32,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: 02-gap/gaps.md (5 gaps, validator-green, ratified), CON-001 contradiction detected and resolved via DEC-001 path d, 03-mapping/service-map.md (7 MAP entries including MAP-001 and MAP-007 as [no-known-service], validator-green, ratified), 03-mapping/recommendations.md (6 REC blocks all 4 mandatory fields present, REC-005 and REC-006 are [no-known-service] for SIEM/SOC and ISMS gaps, validator-green, ratified). Engagement git commit: 583dab5."
+    },
+    {
+      "id": "US-033",
+      "title": "Tracer-bullet: roadmap + handover phases",
+      "description": "As the harness author, I want phases 04 and 05 to produce the final customer-facing deliverable.",
+      "acceptanceCriteria": [
+        "04-roadmap/roadmap.md produced with sequencing-argument H2, capability phases, calendar projection, owners, risks, mitigations",
+        "At least one Y1 quick-win marker present",
+        "Every Y1 item traceable via harness explain back to >=1 gap",
+        "Every compliance item in the roadmap categorised constraint/deadline/enabler",
+        "Roadmap validator-green and ratified",
+        "05-handover/handover.md produced bundling all five components (executive narrative, roadmap, decisions, assumptions, risks); validator-green; ratified",
+        "Handover contains no meta-findings about portal hygiene"
+      ],
+      "priority": 33,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-034",
+      "title": "Tracer-bullet: retro phase + change requests emitted",
+      "description": "As the harness author, I want the retro phase to close the engagement and emit at least one change request into the harness backlog.",
+      "acceptanceCriteria": [
+        "06-retro/retro.md produced, validator-green, ratified",
+        "Retro includes data-quality findings (contradiction count, (c)-resolution count) for the engagement",
+        ">=1 change-request file emitted into <harness-repo>/backlog/change-requests/CR-2026-NNN.md naming the originating customer/engagement (no anonymisation)",
+        "Each change request has status: open, frontmatter with origin phase, originating customer, and proposed change target",
+        "Change requests committed in the harness repo (separate commit from engagement repo)"
+      ],
+      "priority": 34,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: 06-retro/retro.md (ratified, validator-green, produced_by: synthesizer); retro §4.1 records 1 contradiction (CON-001, resolved via path d, 0 via path c, 0 unresolved); §4.2 and §4.3 record MSP portfolio and customer-portal observations; CR-2026-001 (validator body_lines HTML comment skipping) and CR-2026-002 (template author callout) committed in harness repo at backlog/change-requests/. Engagement repo commit: 87073e6; harness commit: separate."
+    },
+    {
+      "id": "US-035",
+      "title": "Apply first retro feedback and ship v0.2.0",
+      "description": "As the harness author, I want to implement at least one change request from the tracer-bullet's retro so the learning loop is proven, not just designed.",
+      "acceptanceCriteria": [
+        "At least one change request from US-034 is implemented (template tweak, prompt refinement, new validator rule, or tool change as scoped)",
+        "The corresponding change-request file's status is updated to 'shipped' with the version (0.2.0)",
+        "CHANGELOG.md bumped to 0.2.0 with an entry referencing the originating change-request id",
+        "Git tag 0.2.0 created on the harness repo",
+        "ruff check passes and mypy passes",
+        "Tests pass (any updated/new tests)"
+      ],
+      "priority": 35,
+      "passes": true,
+      "notes": "Implemented 2026-05-25: CR-2026-001 — body_lines() in validator/_util.py updated to skip HTML comment blocks (multi-line and single-line); 4 new tests added to test_rules.py. CR-2026-002 — author warning callouts added to templates/situation.template.md and templates/retro.template.md. Both CR files updated to status: shipped, shipped_version: 0.2.0. CHANGELOG.md bumped to 0.2.0 with entries referencing CR-2026-001 and CR-2026-002. Git tag 0.2.0 created. 280 tests pass; ruff + mypy clean."
+    }
+  ]
+}
