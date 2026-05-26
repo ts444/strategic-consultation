@@ -17,6 +17,23 @@
 - pyproject.toml had no `[project]` section prior to US-036; added it with `[build-system]` and `[project].dependencies`
 ---
 
+## 2026-05-26 - US-038
+- Implemented `harness/charts.py` with `generate_charts(engagement_path: Path) -> dict[str, Path]` exposing four chart generators
+- Chart 1 (spend_bar): stacked capex/opex bar by year; reads RMI blocks from 04-roadmap/roadmap.md, joins to REC cost data in 03-mapping/recommendations.md
+- Chart 2 (gantt): swim-lane Gantt grouped by capability_phase and shaded by year bucket from 04-roadmap/roadmap.md
+- Chart 3 (risk_donut): donut chart of RSK status (open/mitigated/accepted/closed) from _risks.md
+- Chart 4 (gap_coverage): horizontal bar per GAP coloured by fully-mapped/partially-mapped/no-known-service; joins MAP blocks (service-map.md) with REC compliance_relation (recommendations.md)
+- Added matplotlib>=3.7 and pyyaml>=6.0 to pyproject.toml [project].dependencies
+- Added 9 tests in harness/tests/test_charts.py (one per chart + missing-source skip + integration)
+- Files changed: harness/charts.py (new), harness/tests/test_charts.py (new), pyproject.toml
+- **Learnings for future iterations:**
+  - YAML blocks in markdown use `---...---` delimiters; yaml.safe_load fails on these — use `yaml.safe_load_all` and take the first document
+  - matplotlib.use("Agg") must be called before `import matplotlib.pyplot`; put it at module top after `import matplotlib`
+  - pytest uses /usr/bin/python3 (3.10.12) — install dependencies with `/usr/bin/python3 -m pip install`; not the pipx-managed python
+  - Meridian-Logistics is its own git repo at `/home/tim/strategic-consultation/Meridian-Logistics/`; charts generate to its 05-handover/charts/ dir
+  - RSK blocks in current Meridian-Logistics data lack `status` field — all default to "open" in the donut; that's valid (per schema status is optional on existing entries)
+---
+
 ## 2026-05-26 - US-037
 - Added `rsk_likelihood_impact` validator rule enforcing `likelihood` and `impact` fields on RSK blocks with values `low | medium | high`
 - Updated RSK schema in `templates/_claim.schema.md` and `templates/_registers/_risks.md` from H|M|L to low|medium|high
