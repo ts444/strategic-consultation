@@ -17,6 +17,19 @@
 - pyproject.toml had no `[project]` section prior to US-036; added it with `[build-system]` and `[project].dependencies`
 ---
 
+## 2026-05-26 - US-037
+- Added `rsk_likelihood_impact` validator rule enforcing `likelihood` and `impact` fields on RSK blocks with values `low | medium | high`
+- Updated RSK schema in `templates/_claim.schema.md` and `templates/_registers/_risks.md` from H|M|L to low|medium|high
+- Added RSK field requirements to `prompts/orchestrator/03-mapping.md` constraints section
+- Backfilled `Meridian-Logistics/_risks.md`: RSK-001 high/high, RSK-002 medium/high, RSK-003 medium/medium, RSK-004 high/medium, RSK-005 medium/high
+- Registered rule in `validator/cli.py` and added 7 tests
+- Files changed: validator/rules/rsk_likelihood_impact.py (new), validator/cli.py, validator/tests/test_rules.py, templates/_claim.schema.md, templates/_registers/_risks.md, prompts/orchestrator/03-mapping.md, Meridian-Logistics/_risks.md
+- **Learnings for future iterations:**
+  - The `_risks.md` register is not a phase artifact; running validator/cli.py on it produces pre-existing frontmatter violations (missing phase/status/template) — these are by design
+  - RSK validator rule uses `parse_yaml_blocks` to inspect YAML fenced blocks; same pattern as recommendation_required_fields
+  - NIS2 in RSK-002 title triggers framework_name_in_structured_fields — pre-existing, out of scope for this story
+---
+
 ## 2026-05-26 - US-036
 - Added `[build-system]` and `[project]` sections to pyproject.toml with weasyprint>=62 as first dependency
 - Fixed pre-existing mypy strict error in harness/enter_phase.py:339 (engagement_version str|None narrowed with assert)
