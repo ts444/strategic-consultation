@@ -81,3 +81,16 @@
   - `subprocess.run([tool, "--version"], capture_output=True)` is the reliable pattern to probe tool availability
   - For patchability in tests, imports used by a function must be at module level; local imports inside the function scope cannot be patched via `patch("module.name")`
 ---
+---
+
+## 2026-05-26 - US-041
+- Created `~/msp-portfolio/Security/Incident_Response.md` — full DFIR / 24/7 IR Retainer service in established format
+- Service covers: 24/7 on-call retainer with SLA tiers, initial triage and containment, forensic evidence preservation, malware analysis / IOC identification, ransomware playbooks, law enforcement coordination, post-incident report, annual IR simulation
+- Tags: incident-response, dfir, forensics, retainer, containment
+- Updated `backlog/change-requests/CR-2026-003.md` status to `shipped`
+- Portfolio MCP search_services('incident response') and search_services('DFIR') both return Incident_Response
+- Files changed: ~/msp-portfolio/Security/Incident_Response.md (new), backlog/change-requests/CR-2026-003.md
+- **Learnings for future iterations:**
+  - ~/msp-portfolio/ is NOT its own git repo (no .git directory); the Codebase Patterns note about "commit service changes there separately" is aspirational — in practice, changes to msp-portfolio files are committed from the main harness repo
+  - Portfolio MCP search is keyword-based; service name, tags, and body text are all searchable — put client-facing terms in tags AND body text for reliable retrieval
+---
