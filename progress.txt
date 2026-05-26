@@ -95,6 +95,20 @@
   - Portfolio MCP search is keyword-based; service name, tags, and body text are all searchable — put client-facing terms in tags AND body text for reliable retrieval
 ---
 
+## 2026-05-26 - US-043
+- Updated `prompts/orchestrator/03-mapping.md` with four changes:
+  1. HITL Gate 1 checklist gains awareness item: consultant acknowledges [no-known-service] entries require build/buy/partner DEC-NNN before ratification
+  2. Step 6 Pass A synthesizer instructions: every [no-known-service] MAP entry must be immediately followed by a fenced DECISION_REQUIRED YAML block (gap_id, gap_description, three options: build/buy/partner, required_before)
+  3. Step 6 Pass B synthesizer instructions: for [no-known-service] REC entries resolved as buy/partner, add a roadmap_note field instructing Phase 04 to include a sourcing/procurement RMI item
+  4. HITL Gate 3 exit criteria and Exit Criteria Checklist: explicit BLOCKING condition — ratification is blocked until every [no-known-service] entry has a DEC-NNN in _decisions.md
+- No Python code changed; ruff/mypy/pytest all pass (300 passed, 2 skipped)
+- Files changed: prompts/orchestrator/03-mapping.md
+- **Learnings for future iterations:**
+  - This story was pure prompt-engineering: no validator rule needed, no Python code — only the orchestrator markdown prompt
+  - HITL Gate 1 is the entry-confirm gate (before any mapping); HITL Gate 3 is the ratification gate — awareness items go in Gate 1, hard blocking checks go in Gate 3 and Exit Criteria Checklist
+  - "HITL Gate 1 checklist gains item" in the PRD referred to an awareness acknowledgment at entry (not a post-mapping check)
+---
+
 ## 2026-05-26 - US-042
 - Created `~/msp-portfolio/Compliance/` directory with five service files: NIS2_Entity_Classification.md, TISAX_Readiness.md, ISMS_Programme.md, GDPR_Gap_Assessment.md, Regulatory_Deadline_Tracking.md
 - Each file follows YAML frontmatter format (name, domain, tags, pricing tiers, SLA tiers) + markdown body (Overview, What's Included, What's Not Included, Dependencies)
