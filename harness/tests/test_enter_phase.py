@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from harness.enter_phase import (
     _PHASE_DIRS,
@@ -14,6 +16,7 @@ from harness.enter_phase import (
     _is_ratified,
     _read_engagement_version,
     _read_harness_version,
+    _render_handover_pdf,
     _resolve_phase,
     _upgrade_engagement_version,
     main,
@@ -364,6 +367,139 @@ def test_main_rerun_no_completed_phase_exits_nonzero(tmp_path: Path) -> None:
     _write_claude_md(repo, _read_harness_version())
     rc = main(["--dry-run", "--rerun", str(repo)])
     assert rc == 1
+
+
+# ---------------------------------------------------------------------------
+# _render_handover_pdf
+# ---------------------------------------------------------------------------
+
+
+def _stub_subprocess_version_ok(cmd: list[str], **_: object) -> MagicMock:
+    """Return a successful CompletedProcess for --version checks; fail otherwise."""
+    if "--version" in cmd:
+        m = MagicMock()
+        m.returncode = 0
+        return m
+    m = MagicMock()
+    m.returncode = 0
+    m.stderr = ""
+    return m
+
+
+def _make_handover_engagement(tmp_path: Path) -> Path:
+    """Create a minimal engagement repo with a 05-handover/handover.md."""
+    repo = _make_engagement(tmp_path)
+    _write_claude_md(repo, _read_harness_version())
+    (repo / "05-handover").mkdir(exist_ok=True)
+    handover = repo / "05-handover" / "handover.md"
+    handover.write_text(
+        '---\nphase: "05-handover"\nstatus: ratified\nharness_version: "0.1.0"\n'
+        'template: "handover@1.0.0"\n---\n\n# Handover\n',
+        encoding="utf-8",
+    )
+    return repo
+
+
+def test_render_handover_pdf_raises_if_pandoc_missing(tmp_path: Path) -> None:
+    repo = _make_handover_engagement(tmp_path)
+
+    def _no_pandoc(cmd: list[str], **_: object) -> MagicMock:
+        m = MagicMock()
+        m.returncode = 1 if cmd[0] == "pandoc" else 0
+        return m
+
+    with patch("harness.enter_phase.subprocess.run", side_effect=_no_pandoc):
+        with pytest.raises(RuntimeError, match="pandoc"):
+            _render_handover_pdf(repo)
+
+
+def test_render_handover_pdf_raises_if_weasyprint_missing(tmp_path: Path) -> None:
+    repo = _make_handover_engagement(tmp_path)
+
+    def _no_weasy(cmd: list[str], **_: object) -> MagicMock:
+        m = MagicMock()
+        m.returncode = 1 if cmd[0] == "weasyprint" else 0
+        return m
+
+    with patch("harness.enter_phase.subprocess.run", side_effect=_no_weasy):
+        with pytest.raises(RuntimeError, match="weasyprint"):
+            _render_handover_pdf(repo)
+
+
+def test_render_handover_pdf_raises_on_pandoc_failure(tmp_path: Path) -> None:
+    repo = _make_handover_engagement(tmp_path)
+
+    call_count: list[int] = [0]
+
+    def _pandoc_fails(cmd: list[str], **_: object) -> MagicMock:
+        m = MagicMock()
+        m.stderr = "pandoc error"
+        # First two calls are --version checks (pandoc, weasyprint); third is actual pandoc run.
+        call_count[0] += 1
+        m.returncode = 1 if call_count[0] == 3 else 0
+        return m
+
+    with patch("harness.enter_phase.subprocess.run", side_effect=_pandoc_fails):
+        with patch("harness.enter_phase.generate_charts", return_value={}):
+            with pytest.raises(RuntimeError, match="pandoc failed"):
+                _render_handover_pdf(repo)
+
+
+def test_render_handover_pdf_raises_on_weasyprint_failure(tmp_path: Path) -> None:
+    repo = _make_handover_engagement(tmp_path)
+
+    call_count: list[int] = [0]
+
+    def _weasy_fails(cmd: list[str], **_: object) -> MagicMock:
+        m = MagicMock()
+        m.stderr = "weasyprint error"
+        call_count[0] += 1
+        # Calls: pandoc --version, weasyprint --version, pandoc run, weasyprint run
+        m.returncode = 1 if call_count[0] == 4 else 0
+        return m
+
+    with patch("harness.enter_phase.subprocess.run", side_effect=_weasy_fails):
+        with patch("harness.enter_phase.generate_charts", return_value={}):
+            # Need a stub HTML output for weasyprint to consume
+            (repo / "05-handover" / "handover.html").write_text("<html/>", encoding="utf-8")
+            with pytest.raises(RuntimeError, match="weasyprint failed"):
+                _render_handover_pdf(repo)
+
+
+def test_render_handover_pdf_success_returns_pdf_path(tmp_path: Path) -> None:
+    repo = _make_handover_engagement(tmp_path)
+    pdf_stub = repo / "05-handover" / "handover.pdf"
+
+    def _all_ok(cmd: list[str], **_: object) -> MagicMock:
+        m = MagicMock()
+        m.returncode = 0
+        m.stderr = ""
+        # Simulate weasyprint writing the PDF
+        if cmd[0] == "weasyprint":
+            pdf_stub.write_bytes(b"%PDF-1.4 stub" + b"\x00" * 1024)
+        return m
+
+    with patch("harness.enter_phase.subprocess.run", side_effect=_all_ok):
+        with patch("harness.enter_phase.generate_charts", return_value={}):
+            result = _render_handover_pdf(repo)
+
+    assert result == pdf_stub.resolve()
+
+
+def test_render_handover_pdf_with_meridian_logistics() -> None:
+    """Integration test: render PDF for the real Meridian-Logistics fixture."""
+    import shutil
+
+    if not shutil.which("pandoc") or not shutil.which("weasyprint"):
+        pytest.skip("pandoc or weasyprint not installed")
+
+    engagement = Path("Meridian-Logistics")
+    if not engagement.is_dir():
+        pytest.skip("Meridian-Logistics fixture not present")
+
+    pdf_path = _render_handover_pdf(engagement)
+    assert pdf_path.exists(), "PDF file was not created"
+    assert pdf_path.stat().st_size > 1024, "PDF is smaller than 1 KB"
 
 
 def test_main_rerun_reruns_last_done(tmp_path: Path) -> None:

@@ -18,11 +18,16 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import re
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+from harness.charts import generate_charts
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -216,6 +221,87 @@ def _resolve_phase(phase_arg: str | None, engagement_repo: Path) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# Phase 05 PDF render post-step
+# ---------------------------------------------------------------------------
+
+_HANDOVER_PHASE = "05-handover"
+_ASSETS_DIR = _HARNESS_DIR / "assets"
+
+
+def _render_handover_pdf(engagement_repo: Path) -> Path:
+    """Generate charts then render handover.pdf via pandoc + weasyprint.
+
+    Raises RuntimeError if pandoc or weasyprint is not installed.
+    Returns the absolute path to the produced PDF.
+    """
+    # Check external tools are available.
+    for tool, install_hint in (
+        ("pandoc", "Install pandoc: https://pandoc.org/installing.html"),
+        (
+            "weasyprint",
+            "Install weasyprint: pip install weasyprint  "
+            "(system deps: https://doc.courtbouillon.org/weasyprint/stable/first_steps.html)",
+        ),
+    ):
+        result = subprocess.run(
+            [tool, "--version"],
+            capture_output=True,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"'{tool}' is not installed or not on PATH.\n{install_hint}"
+            )
+
+    handover_dir = engagement_repo / _HANDOVER_PHASE
+    handover_md = handover_dir / "handover.md"
+    handover_html = handover_dir / "handover.html"
+    handover_pdf = handover_dir / "handover.pdf"
+    template = _ASSETS_DIR / "handover-template.html"
+
+    # Step 1 — generate charts.
+    logger.info("Generating charts for %s …", engagement_repo)
+    chart_paths = generate_charts(engagement_repo)
+
+    # Step 2 — run pandoc to produce intermediate HTML.
+    pandoc_cmd = [
+        "pandoc",
+        str(handover_md),
+        "--template",
+        str(template),
+        "--standalone",
+        "--output",
+        str(handover_html),
+    ]
+    # Pass chart paths as pandoc metadata variables so the template can embed them.
+    for key, path in chart_paths.items():
+        pandoc_cmd += ["--metadata", f"{key}={path}"]
+
+    logger.info("Running pandoc …")
+    pandoc_result = subprocess.run(pandoc_cmd, capture_output=True, text=True)
+    if pandoc_result.returncode != 0:
+        raise RuntimeError(
+            f"pandoc failed (exit {pandoc_result.returncode}):\n{pandoc_result.stderr}"
+        )
+
+    # Step 3 — run weasyprint to produce PDF.
+    logger.info("Running weasyprint …")
+    weasy_result = subprocess.run(
+        ["weasyprint", str(handover_html), str(handover_pdf)],
+        capture_output=True,
+        text=True,
+    )
+    if weasy_result.returncode != 0:
+        raise RuntimeError(
+            f"weasyprint failed (exit {weasy_result.returncode}):\n{weasy_result.stderr}"
+        )
+
+    # Step 4 — log the produced PDF path.
+    logger.info("Handover PDF produced: %s", handover_pdf.resolve())
+    print(f"Handover PDF: {handover_pdf.resolve()}")
+    return handover_pdf.resolve()
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -376,7 +462,16 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         result = subprocess.run(cmd, cwd=engagement_repo)
-        return result.returncode
+        rc = result.returncode
+
+        # Post-ratification hook: render handover PDF after phase 05.
+        if rc == 0 and phase_dir == _HANDOVER_PHASE:
+            try:
+                _render_handover_pdf(engagement_repo)
+            except RuntimeError as exc:
+                print(f"warning: PDF render failed — {exc}", file=sys.stderr)
+
+        return rc
     except FileNotFoundError:
         print(
             "error: 'claude' CLI not found. "
