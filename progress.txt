@@ -68,3 +68,16 @@
   - A pandoc WARNING (e.g. missing title) does not set non-zero exit; only errors do
   - msp-logo.png comment near the template (line 34) tells operators where to swap the logo
 ---
+
+## 2026-05-26 - US-040
+- Added `_render_handover_pdf(engagement_repo: Path) -> Path` to `harness/enter_phase.py`
+- Function: checks pandoc and weasyprint are on PATH (raises RuntimeError with install hints if not), calls `generate_charts()`, runs pandoc with HTML template to produce handover.html, runs weasyprint to produce handover.pdf, logs and returns the absolute PDF path
+- Post-ratification hook added in `main()`: called when phase == "05-handover" and claude exits 0; RuntimeError is caught and printed as a warning (so non-PDF failures still return the claude exit code)
+- `generate_charts` imported at module level from `harness.charts` so it can be patched in tests
+- Added 6 tests in `harness/tests/test_enter_phase.py`: missing pandoc, missing weasyprint, pandoc failure, weasyprint failure, success path, and Meridian-Logistics integration test (auto-skipped if pandoc/weasyprint not installed)
+- Files changed: harness/enter_phase.py, harness/tests/test_enter_phase.py
+- **Learnings for future iterations:**
+  - weasyprint is NOT available as a system binary in the dev environment (only via pip); integration test auto-skips with `pytest.skip` when tools are absent
+  - `subprocess.run([tool, "--version"], capture_output=True)` is the reliable pattern to probe tool availability
+  - For patchability in tests, imports used by a function must be at module level; local imports inside the function scope cannot be patched via `patch("module.name")`
+---
