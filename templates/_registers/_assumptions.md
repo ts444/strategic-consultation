@@ -28,7 +28,11 @@ so it can be tracked, challenged, and eventually confirmed or invalidated.
 | `requires_revalidation` | boolean | Default `true`; set `false` only if assumption is structural and unverifiable by design |
 | `phase_introduced` | `00–06` | Phase in which the assumption was first recorded |
 | `phase_expires` | `00–06` or `never` | Phase after which the assumption is expected to be confirmed or superseded |
+| `target_phase` | phase id (optional) | Phase whose HITL gate must resolve this assumption; used by `assumption_resolution_required` validator rule |
 | `invalidates_if_wrong` | list of claim ids | Claims that depend on this assumption and must be revisited if it is invalidated |
+| `resolution_status` | `pending \| resolved \| deferred` (optional) | Set when the assumption is formally addressed in `target_phase`; required when `target_phase` is set and `requires_revalidation:true` |
+| `resolved_in_phase` | phase id (optional) | Phase in which `resolution_status` was last updated |
+| `resolution_note` | string (optional) | Required when `resolution_status:deferred`; explains why resolution was deferred and what conditions would require reopening the assumption |
 
 ---
 
@@ -49,9 +53,13 @@ conf: M
 requires_revalidation: true
 phase_introduced: "00"
 phase_expires: "01"
+target_phase: "01-situation"
 invalidates_if_wrong:
   - GAP-009
   - REC-012
+resolution_status: resolved
+resolved_in_phase: "01-situation"
+resolution_note: "Confirmed — no vendor register found in customer portal (SIT-215). Assumption holds."
 ---
 ```
 
@@ -63,3 +71,7 @@ invalidates_if_wrong:
   under **ASSUMPTIONS FLAGGED** once the entry has aged past `phase_expires`.
 - `invalidates_if_wrong` pointers must reference valid claim ids in scope
   (enforced by `claim_composition_resolvable.py`).
+- YAML blocks with `requires_revalidation: true` AND a non-empty `target_phase` are
+  checked by `assumption_resolution_required.py`: `resolution_status` must be set to
+  `pending`, `resolved`, or `deferred`. A `deferred` status requires a non-empty
+  `resolution_note`. Blocks without `target_phase` are not checked by this rule.

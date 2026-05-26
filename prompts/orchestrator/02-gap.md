@@ -1,6 +1,5 @@
 # Orchestrator Prompt: Phase 02 — Gap Analysis
 
-**Harness version:** `0.1.0`
 **Template pin:** `gaps@1.0.0`
 **Phase:** `02-gap`
 
@@ -62,7 +61,6 @@ HITL Confirmation Record.
    - Declared compliance frameworks (CMP-NNN ids from `_compliance.md`)
    - Budget envelope shape (BUD-NNN ids from `_budget.md`)
    - Named stakeholders
-   - `harness_version` (must match `0.1.0`; abort with a clear error if it does not)
 2. Read `00-intake/scope.md`. Extract:
    - All engagement goals (G-0N ids and descriptions) — every goal must be addressed
    - Out-of-scope items — gaps that touch only out-of-scope areas must be omitted
@@ -73,7 +71,7 @@ HITL Confirmation Record.
    - Note all [known], [elicited], and [inferred] claims; record their confidence levels
    - Extract open questions targeting phase 02 — these indicate where evidence may be thin
 4. Confirm the engagement repo has the expected scaffold:
-   - Directories `00-intake/` through `06-retro/` exist
+   - Phase directories exist — verify by listing the engagement repo. Enumerate exactly these seven (no others, no substitutions): `00-intake/`, `01-situation/`, `02-gap/`, `03-mapping/`, `04-roadmap/`, `05-handover/`, `06-retro/`. Do not extrapolate phase names from memory.
    - Root registers exist and are parseable
 5. If any scaffold file is missing or version mismatches: halt and report the issue.
 
@@ -111,6 +109,8 @@ Before gap analysis begins, confirm:
   [ ] You have reviewed the engagement goals in scope.md and they are still accurate
   [ ] Any changes to CMP-NNN or BUD-NNN entries since situation phase have been committed
   [ ] You have 45–75 minutes for this session
+  [ ] _assumptions.md reviewed: any entry with requires_revalidation:true and
+      target_phase:02-gap must be resolved or deferred before ratification
 ```
 
 Proceed only when all items are confirmed YES. Record the gate timestamp in the HITL
@@ -230,6 +230,7 @@ To request changes: describe what needs changing (I will loop back to the approp
 - [ ] Every GAP block has `compliance_drivers` present (empty list `[]` is valid; absent is not)
 - [ ] Every `compliance_drivers` entry references a valid CMP-NNN id from `_compliance.md`
 - [ ] `_contradictions.md` has zero entries with `Status: unresolved` AND `Blocks: 02-gap`
+- [ ] All assumptions in `_assumptions.md` with `requires_revalidation:true` and `target_phase:02-gap` have `resolution_status:resolved` or `resolution_status:deferred` with a non-empty `resolution_note`
 - [ ] Validator exits 0 (zero violations)
 - [ ] All claim atoms carry label, source, and confidence
 - [ ] Every `gap_description` has `from: A + B` source notation
@@ -260,6 +261,7 @@ Before committing the ratified artifact, confirm ALL of the following:
 - [ ] Every `gap_description` is an [inferred] or [assumed] claim with `from: A + B` notation
 - [ ] Confidence propagation honoured: `conf(gap_description) <= min(conf(current_state), conf(desired_state))`
 - [ ] Zero entries in `_contradictions.md` with `Status: unresolved` AND `Blocks: 02-gap`
+- [ ] All assumptions in `_assumptions.md` with `requires_revalidation:true` and `target_phase:02-gap` have `resolution_status:resolved` or `resolution_status:deferred` with a non-empty `resolution_note`
 - [ ] HITL gate 1 and gate 3 timestamps recorded in gaps.md HITL Confirmation Record
 - [ ] `validator/cli.py validate 02-gap/gaps.md` exits 0 (zero violations)
 - [ ] gaps.md frontmatter `status: ratified`, `ratified_by` and `ratified_at` filled

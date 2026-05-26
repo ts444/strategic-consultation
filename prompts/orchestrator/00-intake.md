@@ -108,6 +108,8 @@ Before intake begins, confirm:
   [ ] You have 60–90 minutes for the interview session
   [ ] Stakeholders named in CLAUDE.md are available or their input can be approximated
   [ ] Compliance frameworks listed in CLAUDE.md are correct and complete
+  [ ] _assumptions.md reviewed: any entry with requires_revalidation:true and
+      target_phase:00-intake has resolution_status set before ratification
 ```
 
 Proceed only when all items are confirmed YES. Record the gate timestamp in the HITL
@@ -248,11 +250,14 @@ scope.md is validator-green. Please review:
   Assumptions recorded: <list ASM-NNN ids>
   Budget gate: <CLEARED — no warning raised | CLEARED — DEC-NNN recorded | BLOCKED — no DEC-NNN>
 
-Mandatory budget gate check:
+Mandatory checks:
   [ ] Either no BUDGET_GAP_WARNING was raised in Step 6, OR a DEC-NNN entry is
       present in _decisions.md recording the consultant's chosen resolution (a/b/c)
+  [ ] All assumptions in _assumptions.md with requires_revalidation:true and
+      target_phase:00-intake have resolution_status:resolved or
+      resolution_status:deferred with a non-empty resolution_note
 
-To ratify: type YES (budget gate must be CLEARED first)
+To ratify: type YES (all mandatory checks must be CLEARED first)
 To request changes: describe what needs changing (I will loop back to the appropriate step)
 ```
 
@@ -281,6 +286,7 @@ Before committing the ratified artifact, confirm ALL of the following:
 - [ ] Out-of-scope items are explicit (min 1 entry)
 - [ ] HITL gate 1 and gate 3 timestamps recorded in scope.md HITL Confirmation Record
 - [ ] Budget gate cleared: either no BUDGET_GAP_WARNING raised, or a DEC-NNN entry is present in `_decisions.md` recording the consultant's resolution choice
+- [ ] All assumptions in `_assumptions.md` with `requires_revalidation:true` and `target_phase:00-intake` have `resolution_status:resolved` or `resolution_status:deferred` with a non-empty `resolution_note`
 - [ ] `validator/cli.py validate 00-intake/scope.md` exits 0 (zero violations)
 - [ ] scope.md frontmatter `status: ratified`, `ratified_by` and `ratified_at` filled
 - [ ] All claim atoms in scope.md carry label, source, and confidence

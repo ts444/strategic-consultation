@@ -1,6 +1,5 @@
 # Orchestrator Prompt: Phase 01 — Situation
 
-**Harness version:** `0.1.0`
 **Template pin:** `situation@1.0.0`
 **Phase:** `01-situation`
 
@@ -62,7 +61,6 @@ HITL Confirmation Record.
    - Declared compliance frameworks (CMP-NNN ids from `_compliance.md`)
    - Budget envelope shape (BUD-NNN ids from `_budget.md`)
    - Named stakeholders
-   - `harness_version` (must match `0.1.0`; abort with a clear error if it does not)
 2. Read `00-intake/scope.md`. Verify:
    - Frontmatter `status: ratified` — if not, halt with: "Entry condition not met: scope.md
      is not ratified. Complete phase 00-intake first."
@@ -70,7 +68,7 @@ HITL Confirmation Record.
    - Extract out-of-scope items — these constrain what the retrievers must skip
    - Extract open questions from intake — these become elicitation targets for Step 5
 3. Confirm the engagement repo has the expected scaffold:
-   - Directories `00-intake/` through `06-retro/` exist
+   - Phase directories exist — verify by listing the engagement repo. Enumerate exactly these seven (no others, no substitutions): `00-intake/`, `01-situation/`, `02-gap/`, `03-mapping/`, `04-roadmap/`, `05-handover/`, `06-retro/`. Do not extrapolate phase names from memory.
    - Root registers (`_assumptions.md`, `_decisions.md`, `_risks.md`, `_contradictions.md`,
      `_compliance.md`, `_budget.md`) exist
 4. If any scaffold file is missing or version mismatches: halt and report the issue.
@@ -111,6 +109,8 @@ Before situation analysis begins, confirm:
   [ ] You have 60–90 minutes for this session
   [ ] You are ready to answer follow-up questions about the customer's environment
   [ ] Any changes to CMP-NNN or BUD-NNN entries since intake have been committed
+  [ ] _assumptions.md reviewed: any entry with requires_revalidation:true and
+      target_phase:01-situation must be resolved or deferred before ratification
 ```
 
 Proceed only when all items are confirmed YES. Record the gate timestamp in the HITL
@@ -259,6 +259,7 @@ To request changes: describe what needs changing (I will loop back to the approp
 - [ ] `_sources.jsonl` contains at least one `portfolio://` URI and one `customer-portal://` URI
 - [ ] At least 3 [elicited] claims appear in §4
 - [ ] `_contradictions.md` has zero entries with `Status: unresolved` AND `Blocks: 01-situation`
+- [ ] All assumptions in `_assumptions.md` with `requires_revalidation:true` and `target_phase:01-situation` have `resolution_status:resolved` or `resolution_status:deferred` with a non-empty `resolution_note`
 - [ ] Validator exits 0 (zero violations)
 - [ ] All claim atoms carry label, source, and confidence
 
@@ -284,6 +285,7 @@ Before committing the ratified artifact, confirm ALL of the following:
 - [ ] Both retrievers invoked; `portfolio://` and `customer-portal://` URIs appear in `_sources.jsonl`
 - [ ] At least 3 [elicited] claims captured by the interviewer
 - [ ] Zero entries in `_contradictions.md` with `Status: unresolved` AND `Blocks: 01-situation`
+- [ ] All assumptions in `_assumptions.md` with `requires_revalidation:true` and `target_phase:01-situation` have `resolution_status:resolved` or `resolution_status:deferred` with a non-empty `resolution_note`
 - [ ] HITL gate 1 and gate 3 timestamps recorded in situation.md HITL Confirmation Record
 - [ ] `validator/cli.py validate 01-situation/situation.md` exits 0 (zero violations)
 - [ ] situation.md frontmatter `status: ratified`, `ratified_by` and `ratified_at` filled

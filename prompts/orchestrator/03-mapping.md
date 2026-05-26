@@ -115,6 +115,9 @@ Before mapping begins, confirm:
   [ ] You understand that any [no-known-service] mapping entries will require a
       documented build/buy/partner decision (DEC-NNN in _decisions.md) before
       ratification; be prepared to make these decisions after the retrieval step
+  [ ] _assumptions.md reviewed: all entries with requires_revalidation:true and
+      target_phase:03-mapping have been identified; you will resolve or formally
+      defer each one (with written resolution_note) before ratification
 ```
 
 Proceed only when all items are confirmed YES. Record the gate timestamp in the HITL
@@ -291,6 +294,10 @@ To request changes: describe what needs changing (I will loop back to the approp
 - [ ] **BLOCKING — build/buy/partner decisions:** every `[no-known-service]` MAP entry has a
       corresponding DEC-NNN entry in `_decisions.md` selecting `build`, `buy`, or `partner`
       with a non-empty rationale. Ratification is explicitly blocked until this is satisfied.
+- [ ] **BLOCKING — assumption revalidation:** all assumptions in `_assumptions.md` with
+      `requires_revalidation:true` and `target_phase:03-mapping` have `resolution_status:resolved`
+      or `resolution_status:deferred` with a non-empty `resolution_note`. Ratification is
+      explicitly blocked until all such assumptions are formally resolved or deferred.
 - [ ] Every GAP-NNN is addressed by at least one REC-NNN in recommendations.md
 - [ ] All four mandatory fields (`compliance_relation`, `cost`, `lock_in`, `opportunity_cost`)
       are present on every REC block
@@ -327,6 +334,10 @@ Before committing the ratified artifacts, confirm ALL of the following:
 - [ ] **Every `[no-known-service]` MAP entry has a corresponding DEC-NNN in `_decisions.md`
       selecting build/buy/partner with rationale — this is a hard gate; ratification is blocked
       until all such decisions are recorded**
+- [ ] **All assumptions in `_assumptions.md` with `requires_revalidation:true` and
+      `target_phase:03-mapping` have `resolution_status:resolved` or `resolution_status:deferred`
+      with a non-empty `resolution_note` — this is a hard gate; ratification is blocked until
+      all such assumptions are formally resolved or deferred**
 - [ ] Every GAP-NNN is addressed by at least one REC-NNN in recommendations.md
 - [ ] All four mandatory fields present on every REC block: `compliance_relation`, `cost`,
       `lock_in`, `opportunity_cost` (`none`/`tbc` is valid; absent is not)

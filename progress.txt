@@ -135,3 +135,20 @@
   - The ROM estimate step is orchestrator-performed arithmetic — no synthesizer subagent needed despite PRD wording (synthesizer is forbidden in phase 00)
   - Budget gate pattern: emit a structured YAML block into the artifact, present to HITL, require DEC-NNN before allowing ratification — same pattern as [no-known-service] gate in US-043
 ---
+
+## 2026-05-26 - US-045
+- Created `validator/rules/assumption_resolution_required.py`: checks YAML blocks with id ASM-NNN where `requires_revalidation:true` AND `target_phase` is set; requires non-empty `resolution_status`; `deferred` also requires non-empty `resolution_note`
+- Updated `validator/cli.py` to import and register the new rule
+- Updated `templates/_registers/_assumptions.md`: added `target_phase`, `resolution_status`, `resolved_in_phase`, `resolution_note` fields to schema table; updated worked example to include new fields; added validator notes for the new rule
+- Backfilled `Meridian-Logistics/_assumptions.md`: added YAML block for ASM-002 with `resolution_status:deferred`, `resolved_in_phase:03-mapping`, and a written resolution_note; added prose resolution entry
+- Updated `templates/service-map.template.md`: added §5 Open Assumptions Resolution table (renumbered HITL Confirmation Record to §6)
+- Updated all six orchestrator prompts (00–05): HITL Gate 1 checklist gains awareness item for target_phase assumptions; HITL Gate 3 ratification checklist and Exit Criteria gain blocking assumption revalidation check
+- Updated `prompts/orchestrator/03-mapping.md` specifically per CR-2026-006: HITL Gate 1 awareness item + HITL Gate 3 and Exit Criteria hard blocking items
+- Updated `backlog/change-requests/CR-2026-006.md` status to `shipped`
+- 8 new tests in `validator/tests/test_rules.py`; 308 passed, 2 skipped; ruff and mypy clean
+- Files changed: validator/rules/assumption_resolution_required.py (new), validator/cli.py, validator/tests/test_rules.py, templates/_registers/_assumptions.md, templates/service-map.template.md, Meridian-Logistics/_assumptions.md, prompts/orchestrator/00-intake.md, prompts/orchestrator/01-situation.md, prompts/orchestrator/02-gap.md, prompts/orchestrator/03-mapping.md, prompts/orchestrator/04-roadmap.md, prompts/orchestrator/05-handover.md, backlog/change-requests/CR-2026-006.md
+- **Learnings for future iterations:**
+  - `_assumptions.md` is a register (not a phase artifact): pre-existing frontmatter violations (missing phase/status/template) are by design; the new rule is file-agnostic and only triggers on YAML blocks with ASM-NNN ids
+  - `parse_yaml_blocks` stores boolean values as strings ("true"); check `str(val).strip().lower() in ("true", "yes")` rather than `val is True`
+  - Assumption resolution pattern mirrors the [no-known-service] gate: YAML block in register → HITL Gate 1 awareness → HITL Gate 3 hard block → Exit Criteria check
+---

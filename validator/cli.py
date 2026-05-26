@@ -8,6 +8,7 @@ from pathlib import Path
 
 from validator import Violation, Warning
 from validator.rules import (
+    assumption_resolution_required,
     claim_composition_resolvable,
     claim_confidence_present,
     claim_label_present,
@@ -29,6 +30,7 @@ _WARN_CHECKERS: list[tuple[str, Callable[[Path], list[Warning]]]] = [
 ]
 
 _CHECKERS: list[tuple[str, Callable[[Path], list[Violation]]]] = [
+    (assumption_resolution_required.RULE, assumption_resolution_required.check),
     (claim_label_present.RULE, claim_label_present.check),
     (claim_source_present.RULE, claim_source_present.check),
     (claim_confidence_present.RULE, claim_confidence_present.check),

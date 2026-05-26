@@ -1205,6 +1205,146 @@ def test_rsk_likelihood_impact_ignores_non_rsk_blocks(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# assumption_resolution_required
+# ---------------------------------------------------------------------------
+
+from validator.rules import assumption_resolution_required  # noqa: E402
+
+_ASM_RESOLVED_BLOCK = (
+    "```yaml\n"
+    "---\n"
+    "id: ASM-001\n"
+    "requires_revalidation: true\n"
+    "target_phase: 01-situation\n"
+    "resolution_status: resolved\n"
+    "resolved_in_phase: 01-situation\n"
+    "resolution_note: Confirmed at situation phase interview.\n"
+    "---\n"
+    "```\n"
+)
+
+_ASM_DEFERRED_BLOCK = (
+    "```yaml\n"
+    "---\n"
+    "id: ASM-002\n"
+    "requires_revalidation: true\n"
+    "target_phase: 03-mapping\n"
+    "resolution_status: deferred\n"
+    "resolved_in_phase: 03-mapping\n"
+    "resolution_note: Accepted as working assumption; SLA to be formalised in Y1.\n"
+    "---\n"
+    "```\n"
+)
+
+_ASM_MISSING_STATUS_BLOCK = (
+    "```yaml\n"
+    "---\n"
+    "id: ASM-003\n"
+    "requires_revalidation: true\n"
+    "target_phase: 02-gap\n"
+    "---\n"
+    "```\n"
+)
+
+_ASM_DEFERRED_NO_NOTE_BLOCK = (
+    "```yaml\n"
+    "---\n"
+    "id: ASM-004\n"
+    "requires_revalidation: true\n"
+    "target_phase: 02-gap\n"
+    "resolution_status: deferred\n"
+    "---\n"
+    "```\n"
+)
+
+_ASM_NO_TARGET_PHASE_BLOCK = (
+    "```yaml\n"
+    "---\n"
+    "id: ASM-005\n"
+    "requires_revalidation: true\n"
+    "---\n"
+    "```\n"
+)
+
+
+def test_assumption_resolution_pass_resolved(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _ASM_RESOLVED_BLOCK)
+    assert assumption_resolution_required.check(f) == []
+
+
+def test_assumption_resolution_pass_deferred_with_note(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _ASM_DEFERRED_BLOCK)
+    assert assumption_resolution_required.check(f) == []
+
+
+def test_assumption_resolution_fail_missing_status(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _ASM_MISSING_STATUS_BLOCK)
+    violations = assumption_resolution_required.check(f)
+    assert len(violations) == 1
+    assert violations[0].rule == "assumption_resolution_required"
+    assert "ASM-003" in violations[0].message
+    assert "resolution_status" in violations[0].message
+
+
+def test_assumption_resolution_fail_deferred_no_note(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _ASM_DEFERRED_NO_NOTE_BLOCK)
+    violations = assumption_resolution_required.check(f)
+    assert len(violations) == 1
+    assert violations[0].rule == "assumption_resolution_required"
+    assert "resolution_note" in violations[0].message
+
+
+def test_assumption_resolution_fail_invalid_status(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: ASM-006\n"
+        "requires_revalidation: true\n"
+        "target_phase: 01-situation\n"
+        "resolution_status: accepted\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    violations = assumption_resolution_required.check(f)
+    assert len(violations) == 1
+    assert "invalid value" in violations[0].message
+
+
+def test_assumption_resolution_skips_no_target_phase(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _ASM_NO_TARGET_PHASE_BLOCK)
+    assert assumption_resolution_required.check(f) == []
+
+
+def test_assumption_resolution_skips_revalidation_false(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: ASM-007\n"
+        "requires_revalidation: false\n"
+        "target_phase: 01-situation\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    assert assumption_resolution_required.check(f) == []
+
+
+def test_assumption_resolution_skips_non_asm_blocks(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: RSK-001\n"
+        "requires_revalidation: true\n"
+        "target_phase: 03-mapping\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    assert assumption_resolution_required.check(f) == []
+
+
+# ---------------------------------------------------------------------------
 # body_lines: HTML comment block skipping (CR-2026-001)
 # ---------------------------------------------------------------------------
 

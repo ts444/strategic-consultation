@@ -128,7 +128,24 @@ Synthesis is blocked while any row shows Status: unresolved AND Blocks: 03-mappi
 
 ---
 
-## 5. HITL Confirmation Record
+## 5. Open Assumptions Resolution
+
+<!--
+List every assumption in _assumptions.md with requires_revalidation:true and
+target_phase:03-mapping. For each, the synthesizer must either mark it resolved
+or explicitly defer it with a written justification. Ratification is blocked until
+every entry in this table has a non-empty resolution_status.
+
+Required fields: resolution_status (resolved | deferred), resolved_in_phase, resolution_note.
+-->
+
+| ASM-id | Statement summary | resolution_status | resolution_note |
+|--------|-------------------|-------------------|-----------------|
+| | | | |
+
+---
+
+## 6. HITL Confirmation Record
 
 | Gate | Timestamp | Consultant confirmation |
 |------|-----------|------------------------|

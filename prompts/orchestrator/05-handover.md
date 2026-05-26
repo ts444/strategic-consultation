@@ -1,6 +1,5 @@
 # Orchestrator Prompt: Phase 05 — Handover
 
-**Harness version:** `0.1.0`
 **Template pins:** `handover@1.0.0`
 **Phase:** `05-handover`
 
@@ -77,7 +76,6 @@ Execute the following steps in order. Do not skip steps. Document each gate in
 1. Read `CLAUDE.md` in the engagement repo root. Extract:
    - Customer name and industry (used in the Executive Narrative heading and tone)
    - Named stakeholders (used to attribute the ratified_by field)
-   - `harness_version` (must match `0.1.0`; abort with a clear error if it does not)
 2. Read `04-roadmap/roadmap.md`. Verify:
    - Frontmatter `status: ratified` — if not, halt with: "Entry condition not met:
      roadmap.md is not ratified. Complete phase 04-roadmap first."
@@ -95,7 +93,7 @@ Execute the following steps in order. Do not skip steps. Document each gate in
 10. Read `_contradictions.md`. Check for any entries with `Status: unresolved` AND
     `Blocks: 05-handover`. If found, halt synthesis and present them to the consultant.
 11. Confirm the engagement repo has the expected scaffold:
-    - Directories `00-intake/` through `06-retro/` exist
+    - Phase directories exist — verify by listing the engagement repo. Enumerate exactly these seven (no others, no substitutions): `00-intake/`, `01-situation/`, `02-gap/`, `03-mapping/`, `04-roadmap/`, `05-handover/`, `06-retro/`. Do not extrapolate phase names from memory.
     - All root registers exist and are parseable
 12. If any required file is missing or version mismatches: halt and report the issue.
 
@@ -135,6 +133,9 @@ Before handover bundle assembly begins, confirm:
   [ ] You are satisfied that all phase artifacts (situation, gaps, service-map,
       recommendations, roadmap) are ratified and no further changes are expected
   [ ] You have 30–60 minutes for this session
+  [ ] _assumptions.md reviewed: all entries with requires_revalidation:true across
+      all phases have resolution_status set; any remaining as pending must be
+      explicitly deferred with a non-empty resolution_note before ratification
 ```
 
 Proceed only when all items are confirmed YES. Record the gate timestamp in the HITL
@@ -289,6 +290,7 @@ To request changes: describe what needs changing (I will loop back to the approp
 - [ ] `## Risk Log` H2 exists reproducing all RSK-NNN entries with statuses
 - [ ] `handover.md` contains NO meta-findings about MSP portal data quality or harness tooling
 - [ ] `_contradictions.md` has zero entries with `Status: unresolved` AND `Blocks: 05-handover`
+- [ ] All assumptions in `_assumptions.md` with `requires_revalidation:true` and `target_phase:05-handover` have `resolution_status:resolved` or `resolution_status:deferred` with a non-empty `resolution_note`
 - [ ] `validator/cli.py validate 05-handover/handover.md` exits 0 (zero violations)
 - [ ] All claim atoms in executive narrative carry label, source, and confidence
 - [ ] Confidence propagation holds: narrative conf ≤ min(conf of referenced claims)
@@ -323,6 +325,7 @@ Before committing the ratified artifact, confirm ALL of the following:
       or harness tooling (those belong exclusively in 06-retro/retro.md §5)
 - [ ] Confidence propagation honoured: narrative conf ≤ min(conf of referenced claims)
 - [ ] Zero entries in `_contradictions.md` with `Status: unresolved` AND `Blocks: 05-handover`
+- [ ] All assumptions in `_assumptions.md` with `requires_revalidation:true` and `target_phase:05-handover` have `resolution_status:resolved` or `resolution_status:deferred` with a non-empty `resolution_note`
 - [ ] HITL gate 1 and gate 3 timestamps recorded in the HITL Confirmation Record
 - [ ] `validator/cli.py validate 05-handover/handover.md` exits 0 (zero violations)
 - [ ] Frontmatter `status: ratified`, `ratified_by`, and `ratified_at` filled before committing

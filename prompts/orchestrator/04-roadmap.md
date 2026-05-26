@@ -1,6 +1,5 @@
 # Orchestrator Prompt: Phase 04 — Roadmap
 
-**Harness version:** `0.1.0`
 **Template pins:** `roadmap@1.0.0`
 **Phase:** `04-roadmap`
 
@@ -63,7 +62,6 @@ Execute the following steps in order. Do not skip steps. Document each gate in
    - Declared compliance frameworks (CMP-NNN ids from `_compliance.md`)
    - Budget envelope shape (BUD-NNN ids from `_budget.md`)
    - Named stakeholders and their roles (used to assign `owner` on RMI blocks)
-   - `harness_version` (must match `0.1.0`; abort with a clear error if it does not)
 2. Read `00-intake/scope.md`. Extract:
    - All engagement goals (G-0N ids) — used to verify Y1 traceability back to goals via gaps
    - Declared timeline constraints or milestones (informs the calendar projection)
@@ -79,7 +77,7 @@ Execute the following steps in order. Do not skip steps. Document each gate in
    in [inferred] claims.
 6. Read `01-situation/situation.md`. Extract SIT-NNN ids for composition source chaining.
 7. Confirm the engagement repo has the expected scaffold:
-   - Directories `00-intake/` through `06-retro/` exist
+   - Phase directories exist — verify by listing the engagement repo. Enumerate exactly these seven (no others, no substitutions): `00-intake/`, `01-situation/`, `02-gap/`, `03-mapping/`, `04-roadmap/`, `05-handover/`, `06-retro/`. Do not extrapolate phase names from memory.
    - Root registers (`_budget.md`, `_compliance.md`, `_risks.md`, `_contradictions.md`,
      `_decisions.md`, `_assumptions.md`) exist and are parseable
 8. If any scaffold file is missing or version mismatches: halt and report the issue.
@@ -122,6 +120,8 @@ Before roadmap sequencing begins, confirm:
   [ ] _risks.md is current (RSK-NNN ids will be referenced in roadmap items)
   [ ] Named stakeholders in CLAUDE.md are current (they will be assigned as owners)
   [ ] You have 60–90 minutes for this session
+  [ ] _assumptions.md reviewed: any entry with requires_revalidation:true and
+      target_phase:04-roadmap must be resolved or deferred before ratification
 ```
 
 Proceed only when all items are confirmed YES. Record the gate timestamp in the HITL
@@ -304,6 +304,7 @@ To request changes: describe what needs changing (I will loop back to the approp
 - [ ] Calendar projection covers Y1–Y3 with milestones traceable to RMI ids
 - [ ] No bare framework names in titles or structured fields
 - [ ] `_contradictions.md` has zero entries with `Status: unresolved` AND `Blocks: 04-roadmap`
+- [ ] All assumptions in `_assumptions.md` with `requires_revalidation:true` and `target_phase:04-roadmap` have `resolution_status:resolved` or `resolution_status:deferred` with a non-empty `resolution_note`
 - [ ] `validator/cli.py validate 04-roadmap/roadmap.md` exits 0 (zero violations)
 - [ ] All claim atoms carry label, source, and confidence
 - [ ] Confidence propagation holds: RMI rationale conf ≤ min(conf of addressed REC claims)
@@ -342,6 +343,7 @@ Before committing the ratified artifact, confirm ALL of the following:
 - [ ] No bare framework names (GDPR, NIS2, ISO27001, DORA, etc.) in titles or structured fields
 - [ ] Confidence propagation honoured: RMI rationale conf ≤ min(conf of addressed REC claims)
 - [ ] Zero entries in `_contradictions.md` with `Status: unresolved` AND `Blocks: 04-roadmap`
+- [ ] All assumptions in `_assumptions.md` with `requires_revalidation:true` and `target_phase:04-roadmap` have `resolution_status:resolved` or `resolution_status:deferred` with a non-empty `resolution_note`
 - [ ] HITL gate 1 and gate 3 timestamps recorded in the HITL Confirmation Record
 - [ ] `validator/cli.py validate 04-roadmap/roadmap.md` exits 0 (zero violations)
 - [ ] Frontmatter `status: ratified`, `ratified_by`, and `ratified_at` filled before committing

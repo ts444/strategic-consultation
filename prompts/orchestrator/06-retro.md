@@ -1,6 +1,5 @@
 # Orchestrator Prompt: Phase 06 — Retro
 
-**Harness version:** `0.1.0`
 **Template pins:** `retro@1.0.0`
 **Phase:** `06-retro`
 
@@ -106,7 +105,6 @@ Execute the following steps in order. Do not skip steps. Document each gate in
    - Customer name and industry (used in the retro title and CR files)
    - Named stakeholders (used to attribute the `ratified_by` field)
    - Engagement start and end dates (or approximate range from phase timestamps)
-   - `harness_version` (must match `0.1.0`; abort with a clear error if it does not)
 2. Read `05-handover/handover.md`. Verify:
    - Frontmatter `status: ratified` — if not, halt with: "Entry condition not met:
      handover.md is not ratified. Complete phase 05-handover first."
