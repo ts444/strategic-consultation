@@ -94,3 +94,14 @@
   - ~/msp-portfolio/ is NOT its own git repo (no .git directory); the Codebase Patterns note about "commit service changes there separately" is aspirational — in practice, changes to msp-portfolio files are committed from the main harness repo
   - Portfolio MCP search is keyword-based; service name, tags, and body text are all searchable — put client-facing terms in tags AND body text for reliable retrieval
 ---
+
+## 2026-05-26 - US-042
+- Created `~/msp-portfolio/Compliance/` directory with five service files: NIS2_Entity_Classification.md, TISAX_Readiness.md, ISMS_Programme.md, GDPR_Gap_Assessment.md, Regulatory_Deadline_Tracking.md
+- Each file follows YAML frontmatter format (name, domain, tags, pricing tiers, SLA tiers) + markdown body (Overview, What's Included, What's Not Included, Dependencies)
+- Portfolio MCP search_services('NIS2') returns NIS2_Entity_Classification; search_services('TISAX') returns TISAX_Readiness; search_services('ISO 27001') returns ISMS_Programme; list_services_in_domain('Compliance') returns all five
+- Updated `backlog/change-requests/CR-2026-004.md` status to `shipped`
+- Files changed: ~/msp-portfolio/Compliance/ (5 new files), backlog/change-requests/CR-2026-004.md
+- **Learnings for future iterations:**
+  - ~/msp-portfolio/ files cannot be git-staged from the harness repo (they're outside the repo root); only files inside the harness repo can be committed — portfolio service files are written to disk but only the CR update goes into the harness commit
+  - Portfolio MCP list_services_in_domain uses the `domain:` field in YAML frontmatter to filter; must match exactly (case-sensitive directory name used as domain value)
+---
