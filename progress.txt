@@ -119,3 +119,19 @@
   - ~/msp-portfolio/ files cannot be git-staged from the harness repo (they're outside the repo root); only files inside the harness repo can be committed — portfolio service files are written to disk but only the CR update goes into the harness commit
   - Portfolio MCP list_services_in_domain uses the `domain:` field in YAML frontmatter to filter; must match exactly (case-sensitive directory name used as domain value)
 ---
+
+## 2026-05-26 - US-044
+- Added Step 6 (Budget Complexity Gate) to `prompts/orchestrator/00-intake.md` between scope.md draft and validator run
+- Budget gate performs ROM estimate: (goal_count × 15k–30k) + (framework_count × 20k–50k) + (domain_count × 10k–25k) with ×0.7 brownfield multiplier
+- If rom_low > stated_envelope × 1.25, synthesizer emits a BUDGET_GAP_WARNING YAML block with stated envelope, ROM range, gap%, and three resolution options (a/b/c)
+- HITL Gate 3 ratification checklist gains mandatory budget gate check; ratification is blocked until gate is CLEARED (no warning, or warning + DEC-NNN recorded)
+- Exit Criteria Checklist updated with budget gate item
+- Updated plan announcement in Step 2 to include the new step
+- Updated CR-2026-005.md status to `shipped`
+- No Python code changed; ruff/mypy/pytest all pass (300 passed, 2 skipped)
+- Files changed: prompts/orchestrator/00-intake.md, backlog/change-requests/CR-2026-005.md
+- **Learnings for future iterations:**
+  - This story was pure prompt-engineering: no validator rule needed, no Python code
+  - The ROM estimate step is orchestrator-performed arithmetic — no synthesizer subagent needed despite PRD wording (synthesizer is forbidden in phase 00)
+  - Budget gate pattern: emit a structured YAML block into the artifact, present to HITL, require DEC-NNN before allowing ratification — same pattern as [no-known-service] gate in US-043
+---
