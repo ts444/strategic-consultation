@@ -1,0 +1,154 @@
+## Codebase Patterns
+- Python package root is `/home/tim/strategic-consultation/`; run pytest/ruff/mypy from there
+- `harness/` is a Python package (has `__init__.py`); tests live in `harness/tests/`
+- `pyproject.toml` at repo root configures ruff (target py310), mypy (strict), pytest testpaths
+- `_read_harness_version()` in harness/init.py resolves CHANGELOG.md via `Path(__file__).parent.parent`
+- prd.json lives at `.ralph/prd.json`, not at the repo root
+- progress.txt lives at the repo root (same dir as CLAUDE.md and design-principles.md)
+- All markdown documents (templates, schemas) reference design-principles.md as the binding spec
+- Worked examples belong inline inside schema docs, not in separate fixtures
+- Claim ids use block-type prefix + NNN (GAP-NNN, REC-NNN, RSK-NNN, RMI-NNN, BUD-NNN, CMP-NNN)
+- MSP portfolio lives at `~/msp-portfolio/` (outside the harness repo); commit service changes there separately
+- Portfolio MCP reads from `~/msp-portfolio/` via PORTFOLIO_ROOT = Path("~/msp-portfolio").expanduser()
+- Service files use YAML frontmatter (name, domain, tags, pricing tiers, SLA tiers) + markdown body sections
+- Orchestrator prompts live at `prompts/orchestrator/NN-phase.md`; HITL gate checklists are embedded in those files
+- Validator enforces block schemas; update both the validator rules and relevant orchestrator prompt schema docs together
+- Change request files live at `backlog/change-requests/CR-YYYY-NNN.md`; update `status:` field to `shipped` when resolved
+- pyproject.toml had no `[project]` section prior to US-036; added it with `[build-system]` and `[project].dependencies`
+---
+
+## 2026-05-26 - US-038
+- Implemented `harness/charts.py` with `generate_charts(engagement_path: Path) -> dict[str, Path]` exposing four chart generators
+- Chart 1 (spend_bar): stacked capex/opex bar by year; reads RMI blocks from 04-roadmap/roadmap.md, joins to REC cost data in 03-mapping/recommendations.md
+- Chart 2 (gantt): swim-lane Gantt grouped by capability_phase and shaded by year bucket from 04-roadmap/roadmap.md
+- Chart 3 (risk_donut): donut chart of RSK status (open/mitigated/accepted/closed) from _risks.md
+- Chart 4 (gap_coverage): horizontal bar per GAP coloured by fully-mapped/partially-mapped/no-known-service; joins MAP blocks (service-map.md) with REC compliance_relation (recommendations.md)
+- Added matplotlib>=3.7 and pyyaml>=6.0 to pyproject.toml [project].dependencies
+- Added 9 tests in harness/tests/test_charts.py (one per chart + missing-source skip + integration)
+- Files changed: harness/charts.py (new), harness/tests/test_charts.py (new), pyproject.toml
+- **Learnings for future iterations:**
+  - YAML blocks in markdown use `---...---` delimiters; yaml.safe_load fails on these — use `yaml.safe_load_all` and take the first document
+  - matplotlib.use("Agg") must be called before `import matplotlib.pyplot`; put it at module top after `import matplotlib`
+  - pytest uses /usr/bin/python3 (3.10.12) — install dependencies with `/usr/bin/python3 -m pip install`; not the pipx-managed python
+  - Meridian-Logistics is its own git repo at `/home/tim/strategic-consultation/Meridian-Logistics/`; charts generate to its 05-handover/charts/ dir
+  - RSK blocks in current Meridian-Logistics data lack `status` field — all default to "open" in the donut; that's valid (per schema status is optional on existing entries)
+---
+
+## 2026-05-26 - US-037
+- Added `rsk_likelihood_impact` validator rule enforcing `likelihood` and `impact` fields on RSK blocks with values `low | medium | high`
+- Updated RSK schema in `templates/_claim.schema.md` and `templates/_registers/_risks.md` from H|M|L to low|medium|high
+- Added RSK field requirements to `prompts/orchestrator/03-mapping.md` constraints section
+- Backfilled `Meridian-Logistics/_risks.md`: RSK-001 high/high, RSK-002 medium/high, RSK-003 medium/medium, RSK-004 high/medium, RSK-005 medium/high
+- Registered rule in `validator/cli.py` and added 7 tests
+- Files changed: validator/rules/rsk_likelihood_impact.py (new), validator/cli.py, validator/tests/test_rules.py, templates/_claim.schema.md, templates/_registers/_risks.md, prompts/orchestrator/03-mapping.md, Meridian-Logistics/_risks.md
+- **Learnings for future iterations:**
+  - The `_risks.md` register is not a phase artifact; running validator/cli.py on it produces pre-existing frontmatter violations (missing phase/status/template) — these are by design
+  - RSK validator rule uses `parse_yaml_blocks` to inspect YAML fenced blocks; same pattern as recommendation_required_fields
+  - NIS2 in RSK-002 title triggers framework_name_in_structured_fields — pre-existing, out of scope for this story
+---
+
+## 2026-05-26 - US-036
+- Added `[build-system]` and `[project]` sections to pyproject.toml with weasyprint>=62 as first dependency
+- Fixed pre-existing mypy strict error in harness/enter_phase.py:339 (engagement_version str|None narrowed with assert)
+- Files changed: pyproject.toml, harness/enter_phase.py
+- **Learnings for future iterations:**
+  - pyproject.toml previously had no [project] section; setuptools>=68 used as build backend
+  - The assert narrowing pattern works cleanly for cases where the comment already says "guaranteed non-None by upfront validation"
+---
+
+## 2026-05-26 - US-039
+- Created `assets/handover-template.html` — valid pandoc HTML5 template with all required CSS features
+- Created `assets/msp-logo.png` — 64×64 blue placeholder PNG (replace with real MSP logo before client delivery)
+- Template features: Inter/system-sans font stack; cover page with logo, $customer-name$, date, title; .y1/.y2/.y3 CSS classes for roadmap table colour-coding; .badge-quick-win styling; h1/h2/h3 with brand accent colour; img { max-width:100% } for chart images
+- Pandoc test: `pandoc --template assets/handover-template.html Meridian-Logistics/05-handover/handover.md` exits 0 and produces 616-line HTML
+- No Python files changed — ruff/mypy/pytest all pass (295 passed, 1 skipped)
+- Files changed: assets/handover-template.html (new), assets/msp-logo.png (new)
+- **Learnings for future iterations:**
+  - Pandoc 2.9.x uses `$variable$` template syntax; optional vars use `$if(var)$...$endif$` guards
+  - A pandoc WARNING (e.g. missing title) does not set non-zero exit; only errors do
+  - msp-logo.png comment near the template (line 34) tells operators where to swap the logo
+---
+
+## 2026-05-26 - US-040
+- Added `_render_handover_pdf(engagement_repo: Path) -> Path` to `harness/enter_phase.py`
+- Function: checks pandoc and weasyprint are on PATH (raises RuntimeError with install hints if not), calls `generate_charts()`, runs pandoc with HTML template to produce handover.html, runs weasyprint to produce handover.pdf, logs and returns the absolute PDF path
+- Post-ratification hook added in `main()`: called when phase == "05-handover" and claude exits 0; RuntimeError is caught and printed as a warning (so non-PDF failures still return the claude exit code)
+- `generate_charts` imported at module level from `harness.charts` so it can be patched in tests
+- Added 6 tests in `harness/tests/test_enter_phase.py`: missing pandoc, missing weasyprint, pandoc failure, weasyprint failure, success path, and Meridian-Logistics integration test (auto-skipped if pandoc/weasyprint not installed)
+- Files changed: harness/enter_phase.py, harness/tests/test_enter_phase.py
+- **Learnings for future iterations:**
+  - weasyprint is NOT available as a system binary in the dev environment (only via pip); integration test auto-skips with `pytest.skip` when tools are absent
+  - `subprocess.run([tool, "--version"], capture_output=True)` is the reliable pattern to probe tool availability
+  - For patchability in tests, imports used by a function must be at module level; local imports inside the function scope cannot be patched via `patch("module.name")`
+---
+---
+
+## 2026-05-26 - US-041
+- Created `~/msp-portfolio/Security/Incident_Response.md` — full DFIR / 24/7 IR Retainer service in established format
+- Service covers: 24/7 on-call retainer with SLA tiers, initial triage and containment, forensic evidence preservation, malware analysis / IOC identification, ransomware playbooks, law enforcement coordination, post-incident report, annual IR simulation
+- Tags: incident-response, dfir, forensics, retainer, containment
+- Updated `backlog/change-requests/CR-2026-003.md` status to `shipped`
+- Portfolio MCP search_services('incident response') and search_services('DFIR') both return Incident_Response
+- Files changed: ~/msp-portfolio/Security/Incident_Response.md (new), backlog/change-requests/CR-2026-003.md
+- **Learnings for future iterations:**
+  - ~/msp-portfolio/ is NOT its own git repo (no .git directory); the Codebase Patterns note about "commit service changes there separately" is aspirational — in practice, changes to msp-portfolio files are committed from the main harness repo
+  - Portfolio MCP search is keyword-based; service name, tags, and body text are all searchable — put client-facing terms in tags AND body text for reliable retrieval
+---
+
+## 2026-05-26 - US-043
+- Updated `prompts/orchestrator/03-mapping.md` with four changes:
+  1. HITL Gate 1 checklist gains awareness item: consultant acknowledges [no-known-service] entries require build/buy/partner DEC-NNN before ratification
+  2. Step 6 Pass A synthesizer instructions: every [no-known-service] MAP entry must be immediately followed by a fenced DECISION_REQUIRED YAML block (gap_id, gap_description, three options: build/buy/partner, required_before)
+  3. Step 6 Pass B synthesizer instructions: for [no-known-service] REC entries resolved as buy/partner, add a roadmap_note field instructing Phase 04 to include a sourcing/procurement RMI item
+  4. HITL Gate 3 exit criteria and Exit Criteria Checklist: explicit BLOCKING condition — ratification is blocked until every [no-known-service] entry has a DEC-NNN in _decisions.md
+- No Python code changed; ruff/mypy/pytest all pass (300 passed, 2 skipped)
+- Files changed: prompts/orchestrator/03-mapping.md
+- **Learnings for future iterations:**
+  - This story was pure prompt-engineering: no validator rule needed, no Python code — only the orchestrator markdown prompt
+  - HITL Gate 1 is the entry-confirm gate (before any mapping); HITL Gate 3 is the ratification gate — awareness items go in Gate 1, hard blocking checks go in Gate 3 and Exit Criteria Checklist
+  - "HITL Gate 1 checklist gains item" in the PRD referred to an awareness acknowledgment at entry (not a post-mapping check)
+---
+
+## 2026-05-26 - US-042
+- Created `~/msp-portfolio/Compliance/` directory with five service files: NIS2_Entity_Classification.md, TISAX_Readiness.md, ISMS_Programme.md, GDPR_Gap_Assessment.md, Regulatory_Deadline_Tracking.md
+- Each file follows YAML frontmatter format (name, domain, tags, pricing tiers, SLA tiers) + markdown body (Overview, What's Included, What's Not Included, Dependencies)
+- Portfolio MCP search_services('NIS2') returns NIS2_Entity_Classification; search_services('TISAX') returns TISAX_Readiness; search_services('ISO 27001') returns ISMS_Programme; list_services_in_domain('Compliance') returns all five
+- Updated `backlog/change-requests/CR-2026-004.md` status to `shipped`
+- Files changed: ~/msp-portfolio/Compliance/ (5 new files), backlog/change-requests/CR-2026-004.md
+- **Learnings for future iterations:**
+  - ~/msp-portfolio/ files cannot be git-staged from the harness repo (they're outside the repo root); only files inside the harness repo can be committed — portfolio service files are written to disk but only the CR update goes into the harness commit
+  - Portfolio MCP list_services_in_domain uses the `domain:` field in YAML frontmatter to filter; must match exactly (case-sensitive directory name used as domain value)
+---
+
+## 2026-05-26 - US-044
+- Added Step 6 (Budget Complexity Gate) to `prompts/orchestrator/00-intake.md` between scope.md draft and validator run
+- Budget gate performs ROM estimate: (goal_count × 15k–30k) + (framework_count × 20k–50k) + (domain_count × 10k–25k) with ×0.7 brownfield multiplier
+- If rom_low > stated_envelope × 1.25, synthesizer emits a BUDGET_GAP_WARNING YAML block with stated envelope, ROM range, gap%, and three resolution options (a/b/c)
+- HITL Gate 3 ratification checklist gains mandatory budget gate check; ratification is blocked until gate is CLEARED (no warning, or warning + DEC-NNN recorded)
+- Exit Criteria Checklist updated with budget gate item
+- Updated plan announcement in Step 2 to include the new step
+- Updated CR-2026-005.md status to `shipped`
+- No Python code changed; ruff/mypy/pytest all pass (300 passed, 2 skipped)
+- Files changed: prompts/orchestrator/00-intake.md, backlog/change-requests/CR-2026-005.md
+- **Learnings for future iterations:**
+  - This story was pure prompt-engineering: no validator rule needed, no Python code
+  - The ROM estimate step is orchestrator-performed arithmetic — no synthesizer subagent needed despite PRD wording (synthesizer is forbidden in phase 00)
+  - Budget gate pattern: emit a structured YAML block into the artifact, present to HITL, require DEC-NNN before allowing ratification — same pattern as [no-known-service] gate in US-043
+---
+
+## 2026-05-26 - US-045
+- Created `validator/rules/assumption_resolution_required.py`: checks YAML blocks with id ASM-NNN where `requires_revalidation:true` AND `target_phase` is set; requires non-empty `resolution_status`; `deferred` also requires non-empty `resolution_note`
+- Updated `validator/cli.py` to import and register the new rule
+- Updated `templates/_registers/_assumptions.md`: added `target_phase`, `resolution_status`, `resolved_in_phase`, `resolution_note` fields to schema table; updated worked example to include new fields; added validator notes for the new rule
+- Backfilled `Meridian-Logistics/_assumptions.md`: added YAML block for ASM-002 with `resolution_status:deferred`, `resolved_in_phase:03-mapping`, and a written resolution_note; added prose resolution entry
+- Updated `templates/service-map.template.md`: added §5 Open Assumptions Resolution table (renumbered HITL Confirmation Record to §6)
+- Updated all six orchestrator prompts (00–05): HITL Gate 1 checklist gains awareness item for target_phase assumptions; HITL Gate 3 ratification checklist and Exit Criteria gain blocking assumption revalidation check
+- Updated `prompts/orchestrator/03-mapping.md` specifically per CR-2026-006: HITL Gate 1 awareness item + HITL Gate 3 and Exit Criteria hard blocking items
+- Updated `backlog/change-requests/CR-2026-006.md` status to `shipped`
+- 8 new tests in `validator/tests/test_rules.py`; 308 passed, 2 skipped; ruff and mypy clean
+- Files changed: validator/rules/assumption_resolution_required.py (new), validator/cli.py, validator/tests/test_rules.py, templates/_registers/_assumptions.md, templates/service-map.template.md, Meridian-Logistics/_assumptions.md, prompts/orchestrator/00-intake.md, prompts/orchestrator/01-situation.md, prompts/orchestrator/02-gap.md, prompts/orchestrator/03-mapping.md, prompts/orchestrator/04-roadmap.md, prompts/orchestrator/05-handover.md, backlog/change-requests/CR-2026-006.md
+- **Learnings for future iterations:**
+  - `_assumptions.md` is a register (not a phase artifact): pre-existing frontmatter violations (missing phase/status/template) are by design; the new rule is file-agnostic and only triggers on YAML blocks with ASM-NNN ids
+  - `parse_yaml_blocks` stores boolean values as strings ("true"); check `str(val).strip().lower() in ("true", "yes")` rather than `val is True`
+  - Assumption resolution pattern mirrors the [no-known-service] gate: YAML block in register → HITL Gate 1 awareness → HITL Gate 3 hard block → Exit Criteria check
+---

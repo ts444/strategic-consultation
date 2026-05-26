@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="$lang$" xml:lang="$lang$"$if(dir)$ dir="$dir$"$endif$>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+$if(title)$  <title>$title$</title>$endif$
+  <style>
+    /* ── Typography ───────────────────────────────────────────────────── */
+    :root {
+      --brand-primary:   #1E40AF;
+      --brand-secondary: #0F766E;
+      --brand-accent:    #6D28D9;
+      --y1-colour:       #DBEAFE;
+      --y1-border:       #1E40AF;
+      --y2-colour:       #D1FAE5;
+      --y2-border:       #0F766E;
+      --y3-colour:       #EDE9FE;
+      --y3-border:       #6D28D9;
+      --quick-win-bg:    #FEF9C3;
+      --quick-win-fg:    #713F12;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", ui-sans-serif, system-ui, -apple-system,
+                   BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+                   Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #1a1a1a;
+      background: #ffffff;
+    }
+
+    /* ── Cover page ───────────────────────────────────────────────────── */
+    /*
+     * Replace assets/msp-logo.png with your actual MSP logo before
+     * generating client deliverables.  Recommended size: 200 × 60 px,
+     * transparent background, PNG or SVG.
+     */
+    .cover-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 80px 72px;
+      background: linear-gradient(135deg, #f0f4ff 0%, #fafafa 100%);
+      page-break-after: always;
+    }
+
+    .cover-logo {
+      max-width: 200px;
+      max-height: 80px;
+      margin-bottom: 48px;
+    }
+
+    .cover-title {
+      font-size: 28pt;
+      font-weight: 700;
+      color: var(--brand-primary);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .cover-customer {
+      font-size: 18pt;
+      font-weight: 600;
+      color: var(--brand-secondary);
+      margin-bottom: 8px;
+    }
+
+    .cover-meta {
+      font-size: 10pt;
+      color: #555;
+      margin-top: 8px;
+    }
+
+    .cover-divider {
+      width: 64px;
+      height: 4px;
+      background: var(--brand-primary);
+      border-radius: 2px;
+      margin: 24px 0;
+    }
+
+    /* ── Main content ────────────────────────────────────────────────── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* ── Headings ────────────────────────────────────────────────────── */
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 700;
+      line-height: 1.25;
+      margin-top: 2em;
+      margin-bottom: 0.5em;
+    }
+
+    h1 { font-size: 20pt; color: var(--brand-primary); border-bottom: 2px solid var(--brand-primary); padding-bottom: 6px; }
+    h2 { font-size: 15pt; color: var(--brand-primary); border-left: 4px solid var(--brand-primary); padding-left: 10px; }
+    h3 { font-size: 12pt; color: var(--brand-secondary); border-left: 3px solid var(--brand-secondary); padding-left: 8px; }
+    h4 { font-size: 10.5pt; color: var(--brand-accent); }
+
+    p { margin-bottom: 1em; }
+
+    /* ── Tables ──────────────────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5em 0;
+      font-size: 9.5pt;
+    }
+
+    th {
+      background: var(--brand-primary);
+      color: #fff;
+      text-align: left;
+      padding: 8px 10px;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td { background: #f9fafb; }
+
+    /* Roadmap year classes — applied by pandoc lua filter or manually */
+    .y1 td, tr.y1 td { background: var(--y1-colour); border-left: 3px solid var(--y1-border); }
+    .y2 td, tr.y2 td { background: var(--y2-colour); border-left: 3px solid var(--y2-border); }
+    .y3 td, tr.y3 td { background: var(--y3-colour); border-left: 3px solid var(--y3-border); }
+
+    /* ── Quick-win badge ─────────────────────────────────────────────── */
+    .quick-win,
+    td:last-child:not(:empty) {
+      /* The ✓ character in the Quick win column is styled via content match */
+    }
+
+    .badge-quick-win {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--quick-win-bg);
+      color: var(--quick-win-fg);
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      vertical-align: middle;
+    }
+
+    /* Style ✓ tick in last table column as a quick-win badge */
+    table td:last-child {
+      text-align: center;
+    }
+
+    /* ── Images (charts) ─────────────────────────────────────────────── */
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 1.5em auto;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+
+    /* ── Code / inline ───────────────────────────────────────────────── */
+    code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code",
+                   ui-monospace, monospace;
+      font-size: 0.88em;
+      background: #f3f4f6;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    pre {
+      background: #f3f4f6;
+      padding: 1em;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1.5em 0;
+    }
+
+    pre code { background: none; padding: 0; }
+
+    /* ── Print ───────────────────────────────────────────────────────── */
+    @media print {
+      body { font-size: 10pt; }
+      .cover-page { min-height: 100vh; }
+      main { padding: 24px 40px; }
+      h2 { page-break-after: avoid; }
+      table { page-break-inside: avoid; }
+    }
+  </style>
+$for(header-includes)$
+  $header-includes$
+$endfor$
+</head>
+<body>
+
+<!-- Cover page -->
+<div class="cover-page">
+  <img class="cover-logo"
+       src="assets/msp-logo.png"
+       alt="MSP logo" />
+  <div class="cover-divider"></div>
+  <div class="cover-title">$if(title)$$title$$else$Strategic IT Roadmap$endif$</div>
+$if(customer-name)$  <div class="cover-customer">$customer-name$</div>$endif$
+$if(date)$  <div class="cover-meta">Engagement date: $date$</div>$endif$
+</div>
+
+<main>
+$for(include-before)$
+  $include-before$
+$endfor$
+
+$body$
+
+$for(include-after)$
+  $include-after$
+$endfor$
+</main>
+
+</body>
+</html>
