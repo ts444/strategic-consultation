@@ -217,8 +217,8 @@ referenced from phase artifacts.
 | `id` | `RSK-NNN` | Sequential |
 | `title` | string | |
 | `description` | claim | `[inferred]` or `[assumed]` |
-| `likelihood` | `H \| M \| L` | |
-| `impact` | `H \| M \| L` | |
+| `likelihood` | `low \| medium \| high` | |
+| `impact` | `low \| medium \| high` | |
 | `owner` | string | Named person or role |
 | `mitigation` | string | At least a direction; may be `pending` |
 | `triggered_by` | list of claim ids | What generates this risk |
@@ -237,8 +237,8 @@ description: >
   current weak controls. A targeted attack in this window could achieve full
   domain compromise.
   [inferred] [source:from: GAP-004 + REC-007] [conf:M]
-likelihood: M
-impact: H
+likelihood: medium
+impact: high
 owner: Customer CISO (placeholder)
 mitigation: >
   Accelerate deployment timeline; add temporary break-glass monitoring via

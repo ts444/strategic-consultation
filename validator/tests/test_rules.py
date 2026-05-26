@@ -891,6 +891,7 @@ def test_rmi_required_fields_fail_no_y1_quick_win(tmp_path: Path) -> None:
 from validator.rules import (  # noqa: E402
     claim_composition_resolvable,
     framework_name_in_structured_fields,
+    rsk_likelihood_impact,
 )
 
 
@@ -1089,6 +1090,118 @@ def test_composition_resolvable_fail_unratified_prior_phase(tmp_path: Path) -> N
     )
     violations = claim_composition_resolvable.check(gaps)
     assert len(violations) == 1
+
+
+# ---------------------------------------------------------------------------
+# body_lines: HTML comment block skipping (CR-2026-001)
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# rsk_likelihood_impact
+# ---------------------------------------------------------------------------
+
+_RSK_FULL_BLOCK = (
+    "```yaml\n"
+    "---\n"
+    "id: RSK-001\n"
+    "title: Test risk\n"
+    "likelihood: high\n"
+    "impact: medium\n"
+    "owner: CISO\n"
+    "mitigation: Mitigate it\n"
+    "---\n"
+    "```\n"
+)
+
+_RSK_MISSING_LIKELIHOOD = (
+    "```yaml\n"
+    "---\n"
+    "id: RSK-001\n"
+    "title: Test risk\n"
+    "impact: high\n"
+    "owner: CISO\n"
+    "mitigation: Mitigate it\n"
+    "---\n"
+    "```\n"
+)
+
+_RSK_INVALID_VALUE = (
+    "```yaml\n"
+    "---\n"
+    "id: RSK-001\n"
+    "title: Test risk\n"
+    "likelihood: H\n"
+    "impact: M\n"
+    "owner: CISO\n"
+    "mitigation: Mitigate it\n"
+    "---\n"
+    "```\n"
+)
+
+
+def test_rsk_likelihood_impact_pass(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _RSK_FULL_BLOCK)
+    assert rsk_likelihood_impact.check(f) == []
+
+
+def test_rsk_likelihood_impact_all_valid_values(tmp_path: Path) -> None:
+    for val in ("low", "medium", "high"):
+        body = (
+            "```yaml\n"
+            "---\n"
+            f"id: RSK-001\nlikelihood: {val}\nimpact: {val}\n"
+            "---\n"
+            "```\n"
+        )
+        f = _artifact(tmp_path, body)
+        assert rsk_likelihood_impact.check(f) == []
+
+
+def test_rsk_likelihood_impact_fail_missing_likelihood(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _RSK_MISSING_LIKELIHOOD)
+    violations = rsk_likelihood_impact.check(f)
+    assert len(violations) == 1
+    assert violations[0].rule == "rsk_likelihood_impact"
+    assert "likelihood" in violations[0].message
+
+
+def test_rsk_likelihood_impact_fail_missing_both(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: RSK-001\n"
+        "title: Test risk\n"
+        "owner: CISO\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    violations = rsk_likelihood_impact.check(f)
+    assert len(violations) == 2
+
+
+def test_rsk_likelihood_impact_fail_invalid_value(tmp_path: Path) -> None:
+    f = _artifact(tmp_path, _RSK_INVALID_VALUE)
+    violations = rsk_likelihood_impact.check(f)
+    assert len(violations) == 2
+    assert all(v.rule == "rsk_likelihood_impact" for v in violations)
+    messages = {v.message for v in violations}
+    assert any("likelihood" in m for m in messages)
+    assert any("impact" in m for m in messages)
+
+
+def test_rsk_likelihood_impact_ignores_non_rsk_blocks(tmp_path: Path) -> None:
+    body = (
+        "```yaml\n"
+        "---\n"
+        "id: GAP-001\n"
+        "title: Not a risk\n"
+        "---\n"
+        "```\n"
+    )
+    f = _artifact(tmp_path, body)
+    assert rsk_likelihood_impact.check(f) == []
 
 
 # ---------------------------------------------------------------------------

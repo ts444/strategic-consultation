@@ -19,6 +19,7 @@ from validator.rules import (
     label_producer_binding,
     recommendation_required_fields,
     roadmap_item_required_fields,
+    rsk_likelihood_impact,
     template_conformance,
     trace_populated,
 )
@@ -40,6 +41,7 @@ _CHECKERS: list[tuple[str, Callable[[Path], list[Violation]]]] = [
     (roadmap_item_required_fields.RULE, roadmap_item_required_fields.check),
     (framework_name_in_structured_fields.RULE, framework_name_in_structured_fields.check),
     (claim_composition_resolvable.RULE, claim_composition_resolvable.check),
+    (rsk_likelihood_impact.RULE, rsk_likelihood_impact.check),
 ]
 
 

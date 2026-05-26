@@ -1,6 +1,5 @@
 # Orchestrator Prompt: Phase 03 — Mapping
 
-**Harness version:** `0.1.0`
 **Template pins:** `service-map@1.0.0`, `recommendations@1.0.0`
 **Phase:** `03-mapping`
 
@@ -62,7 +61,6 @@ Execute the following steps in order. Do not skip steps. Document each gate in b
    - Declared compliance frameworks (CMP-NNN ids from `_compliance.md`)
    - Budget envelope shape (BUD-NNN ids from `_budget.md`)
    - Named stakeholders
-   - `harness_version` (must match `0.1.0`; abort with a clear error if it does not)
 2. Read `00-intake/scope.md`. Extract:
    - All engagement goals (G-0N ids) — used to trace recommendations back to scope
    - Out-of-scope items — mapping entries for out-of-scope gaps must be omitted
@@ -75,7 +73,7 @@ Execute the following steps in order. Do not skip steps. Document each gate in b
 4. Read `01-situation/situation.md`. Extract all claim ids — these are the leaf facts that
    underpin gap claims and will anchor composition sources in mapping entries.
 5. Confirm the engagement repo has the expected scaffold:
-   - Directories `00-intake/` through `06-retro/` exist
+   - Phase directories exist — verify by listing the engagement repo. Enumerate exactly these seven (no others, no substitutions): `00-intake/`, `01-situation/`, `02-gap/`, `03-mapping/`, `04-roadmap/`, `05-handover/`, `06-retro/`. Do not extrapolate phase names from memory.
    - Root registers exist and are parseable
 6. If any scaffold file is missing or version mismatches: halt and report the issue.
 
@@ -341,3 +339,8 @@ Before committing the ratified artifacts, confirm ALL of the following:
    cannot be cleared in two retries, stop and surface the issue. Never silently skip a gap.
 10. **Git discipline** — both artifacts must be committed together. Do not commit one without the
     other.
+11. **RSK block schema** — any RSK-NNN block created or updated during this phase must include two
+    required fields: `likelihood: low | medium | high` and `impact: low | medium | high`. These
+    ordinal values drive the risk heat map chart in the phase 05 handover PDF. Blocks missing
+    either field, or using legacy `H | M | L` notation, will fail the `rsk_likelihood_impact`
+    validator rule.

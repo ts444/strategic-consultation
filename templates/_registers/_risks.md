@@ -25,8 +25,8 @@ reproduced here for register-level context.
 | `id` | `RSK-NNN` | Sequential, unique within engagement |
 | `title` | string | |
 | `description` | claim | `[inferred]` or `[assumed]`; must carry `[source:…]` and `[conf:…]` |
-| `likelihood` | `H \| M \| L` | |
-| `impact` | `H \| M \| L` | |
+| `likelihood` | `low \| medium \| high` | |
+| `impact` | `low \| medium \| high` | |
 | `owner` | string | Named person or role |
 | `mitigation` | string | Direction or action; `pending` is permitted temporarily |
 | `triggered_by` | list of claim ids | Must be resolvable (enforced by validator) |
@@ -61,8 +61,8 @@ description: >
   current weak controls. A targeted attack in this window could achieve full
   domain compromise.
   [inferred] [source:from: GAP-004 + REC-007] [conf:M]
-likelihood: M
-impact: H
+likelihood: medium
+impact: high
 owner: Customer CISO (placeholder)
 mitigation: >
   Accelerate deployment timeline; add temporary break-glass monitoring via
