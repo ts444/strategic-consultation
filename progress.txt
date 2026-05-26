@@ -55,3 +55,16 @@
   - pyproject.toml previously had no [project] section; setuptools>=68 used as build backend
   - The assert narrowing pattern works cleanly for cases where the comment already says "guaranteed non-None by upfront validation"
 ---
+
+## 2026-05-26 - US-039
+- Created `assets/handover-template.html` — valid pandoc HTML5 template with all required CSS features
+- Created `assets/msp-logo.png` — 64×64 blue placeholder PNG (replace with real MSP logo before client delivery)
+- Template features: Inter/system-sans font stack; cover page with logo, $customer-name$, date, title; .y1/.y2/.y3 CSS classes for roadmap table colour-coding; .badge-quick-win styling; h1/h2/h3 with brand accent colour; img { max-width:100% } for chart images
+- Pandoc test: `pandoc --template assets/handover-template.html Meridian-Logistics/05-handover/handover.md` exits 0 and produces 616-line HTML
+- No Python files changed — ruff/mypy/pytest all pass (295 passed, 1 skipped)
+- Files changed: assets/handover-template.html (new), assets/msp-logo.png (new)
+- **Learnings for future iterations:**
+  - Pandoc 2.9.x uses `$variable$` template syntax; optional vars use `$if(var)$...$endif$` guards
+  - A pandoc WARNING (e.g. missing title) does not set non-zero exit; only errors do
+  - msp-logo.png comment near the template (line 34) tells operators where to swap the logo
+---
