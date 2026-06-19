@@ -1,0 +1,189 @@
+{
+  "project": "Strategic Consulting Harness",
+  "branchName": "ralph/handover-pdf-and-cr-resolution",
+  "description": "Upgrade phase 05 handover from a markdown summary to a visually polished PDF customer deliverable (pandoc + weasyprint, four embedded charts, cover page, colour-coded roadmap table). Simultaneously resolves all four open change requests: add Incident Response and Compliance services to the MSP portfolio, add a build/buy/partner decision gate for no-known-service gaps, harden the intake budget validation, and generalise assumption revalidation to all phase HITL gates.",
+  "userStories": [
+    {
+      "id": "US-036",
+      "title": "Add weasyprint dependency to pyproject.toml",
+      "description": "As a developer, I need weasyprint installed as a project dependency so the PDF render step works out of the box after a standard pip install.",
+      "acceptanceCriteria": [
+        "weasyprint added to [project].dependencies in pyproject.toml",
+        "pip install -e . installs weasyprint successfully",
+        "python3 -c 'import weasyprint' exits 0 after install",
+        "Existing pytest suite still passes",
+        "ruff and mypy pass"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-037",
+      "title": "Extend RSK schema with likelihood and impact fields",
+      "description": "As a consultant, I want risk blocks to record likelihood and impact (ordinal: low/medium/high) so the handover PDF can render a risk heat map chart.",
+      "acceptanceCriteria": [
+        "RSK block schema in the relevant orchestrator prompt (03-mapping.md) gains two required fields: likelihood: low | medium | high and impact: low | medium | high",
+        "Validator updated: any RSK block missing likelihood or impact produces a validation error",
+        "Meridian-Logistics/_risks.md backfilled: RSK-001 (NIS2 deadline) likelihood:high impact:high; RSK-002 (patch gap) likelihood:medium impact:high; RSK-003 (WAN capacity) likelihood:medium impact:medium; RSK-004 (budget overrun) likelihood:high impact:medium; RSK-005 (TISAX timeline) likelihood:medium impact:high",
+        "Validator runs green on updated Meridian-Logistics engagement (python -m validator Meridian-Logistics or equivalent)",
+        "pytest passes",
+        "ruff and mypy pass"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-038",
+      "title": "Python chart generator \u2014 four charts from engagement registers",
+      "description": "As the harness, I need a deterministic Python module that reads an engagement's markdown registers and produces four matplotlib PNG charts for embedding in the handover PDF.",
+      "acceptanceCriteria": [
+        "Module at harness/charts.py exposes generate_charts(engagement_path: Path) -> dict[str, Path]",
+        "Chart 1 \u2014 Spend stacked bar: Y1/Y2/Y3 columns with stacked capex/opex segments; data from RMI blocks in 04-roadmap/roadmap.md grouped by year",
+        "Chart 2 \u2014 Gantt swim-lane: one row per RMI item grouped by phase (foundations/enablers/value-drivers/optimisations), shaded by year bucket; data from 04-roadmap/roadmap.md",
+        "Chart 3 \u2014 Risk status donut: segments open/mitigated/accepted/closed; data from _risks.md RSK blocks",
+        "Chart 4 \u2014 Gap coverage bar: one horizontal bar per GAP block coloured by mapping outcome (fully-mapped/partially-mapped/no-known-service); data joined from 02-gap/gaps.md and 03-mapping/service-map.md",
+        "Charts written to <engagement_path>/05-handover/charts/ as spend_bar.png, gantt.png, risk_donut.png, gap_coverage.png",
+        "If a source register is absent, that chart is skipped with a logged warning; other charts still render",
+        "generate_charts(Path('Meridian-Logistics')) completes without error and produces four non-empty PNGs",
+        "pytest includes at least one test per chart verifying the PNG is produced and file size > 0 using Meridian-Logistics fixtures",
+        "ruff and mypy pass"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-039",
+      "title": "HTML/CSS pandoc template and MSP logo placeholder",
+      "description": "As the harness, I need an HTML/CSS template that pandoc uses to produce a visually polished PDF with a cover page, MSP branding, colour-coded roadmap table, and chart image embedding.",
+      "acceptanceCriteria": [
+        "Template at assets/handover-template.html is a valid pandoc HTML5 template",
+        "MSP logo placeholder at assets/msp-logo.png exists (any non-empty PNG; add a comment near the template noting where to replace it)",
+        "CSS provides: Inter or system-sans font stack; cover page block with MSP logo, $customer-name$ variable, engagement date, and title; colour-coded roadmap table (Y1 one accent colour, Y2 second, Y3 third via CSS classes); quick-win badge styling; section headings with colour accent; chart images sized to page width via max-width:100%",
+        "Running pandoc --template assets/handover-template.html on Meridian-Logistics/05-handover/handover.md produces an HTML file without errors",
+        "ruff and mypy pass (no Python changes required in this story)"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-040",
+      "title": "PDF render post-step in phase 05 harness",
+      "description": "As a consultant, I want phase 05 to automatically produce handover.pdf after the markdown is ratified, so I have a ready-to-send customer deliverable with no manual steps.",
+      "acceptanceCriteria": [
+        "harness/enter_phase.py (or equivalent phase runner) gains a post-ratification hook triggered only for phase 05-handover",
+        "Hook step 1: calls generate_charts(engagement_path) from harness/charts.py",
+        "Hook step 2: runs pandoc <handover.md> --template assets/handover-template.html with chart image paths passed as metadata variables, writing intermediate HTML",
+        "Hook step 3: runs weasyprint <handover.html> <handover.pdf>",
+        "Hook step 4: logs the absolute path of the produced PDF",
+        "05-handover/handover.pdf is present in Meridian-Logistics engagement after hook runs",
+        "PDF file size > 1 KB",
+        "If weasyprint or pandoc is not installed, hook raises RuntimeError with clear installation instructions",
+        "pytest passes",
+        "ruff and mypy pass"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-041",
+      "title": "Add Incident Response service to MSP portfolio",
+      "description": "As the mapping phase, I need an Incident Response service in the portfolio so DFIR-related gaps map to a real service instead of [no-known-service].",
+      "acceptanceCriteria": [
+        "New file at ~/msp-portfolio/Security/Incident_Response.md in established service format (YAML frontmatter: name, domain, tags, pricing tiers, SLA tiers; markdown body: Overview, What's Included, What's Not Included, Dependencies)",
+        "Service covers: 24/7 on-call IR retainer, initial triage and containment, forensic evidence preservation, post-incident report, law enforcement coordination",
+        "Tags include: incident-response, dfir, forensics, retainer, containment",
+        "Portfolio MCP search_services('incident response') returns this service",
+        "Portfolio MCP search_services('DFIR') returns this service",
+        "New file committed to ~/msp-portfolio/ git repo with message: feat: add Incident Response service",
+        "backlog/change-requests/CR-2026-003.md status updated to shipped",
+        "Existing portfolio MCP tests pass",
+        "ruff and mypy pass"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-042",
+      "title": "Add Compliance domain and five compliance services to MSP portfolio",
+      "description": "As the mapping phase, I need a Compliance service domain so regulatory and framework-related gaps map to real services instead of [no-known-service].",
+      "acceptanceCriteria": [
+        "~/msp-portfolio/Compliance/ directory created with five service files: NIS2_Entity_Classification.md, TISAX_Readiness.md, ISMS_Programme.md, GDPR_Gap_Assessment.md, Regulatory_Deadline_Tracking.md",
+        "Each file follows the established format (YAML frontmatter + markdown body with Overview, What's Included, What's Not Included, Dependencies)",
+        "NIS2_Entity_Classification covers: scoping Essential vs Important entity status, regulatory deadline tracking, Art.21 and Art.23 obligations",
+        "TISAX_Readiness covers: label scoping, gap assessment against VDA ISA, readiness roadmap for automotive suppliers",
+        "ISMS_Programme covers: ISO 27001 scope definition, risk treatment plan, control implementation, certification readiness",
+        "GDPR_Gap_Assessment covers: data mapping, lawful basis review, DPIA support, breach notification readiness",
+        "Regulatory_Deadline_Tracking covers: ongoing monitoring of applicable regulatory deadlines with proactive advisory alerts",
+        "Portfolio MCP search_services('NIS2') returns NIS2_Entity_Classification",
+        "Portfolio MCP search_services('TISAX') returns TISAX_Readiness",
+        "Portfolio MCP search_services('ISO 27001') returns ISMS_Programme",
+        "Portfolio MCP list_services_in_domain('Compliance') returns all five services",
+        "All five files committed to ~/msp-portfolio/ with message: feat: add Compliance domain with 5 services",
+        "backlog/change-requests/CR-2026-004.md status updated to shipped",
+        "Existing portfolio MCP tests pass",
+        "ruff and mypy pass"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-043",
+      "title": "Build/buy/partner HITL decision gate for [no-known-service] gaps",
+      "description": "As a consultant, I want to be forced to make a documented build/buy/partner decision for any gap that maps to [no-known-service], so the roadmap always has a resolution path and the decision is recorded as a DEC-NNN entry.",
+      "acceptanceCriteria": [
+        "prompts/orchestrator/03-mapping.md updated: when synthesizer produces a MAP entry with [no-known-service], it must also emit a DECISION_REQUIRED block listing the gap ID, gap description, and three options (build in-house / buy third-party product / partner with specialist firm)",
+        "HITL Gate 1 checklist in 03-mapping.md gains item: All [no-known-service] MAP entries have a corresponding DEC-NNN decision in _decisions.md selecting build/buy/partner with rationale",
+        "Phase 03 ratification is explicitly blocked until all [no-known-service] entries have a resolution decision in _decisions.md",
+        "Synthesizer prompt instructs that the roadmap must include a sourcing/procurement RMI item for each [no-known-service] gap resolved as buy or partner",
+        "ruff and mypy pass",
+        "pytest passes"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-044",
+      "title": "Budget validation hard gate at intake (CR-2026-005)",
+      "description": "As a consultant, I want intake to flag and require explicit sign-off when the customer's stated budget envelope is likely undersized for their stated goals, so budget gaps are surfaced before scope is fixed.",
+      "acceptanceCriteria": [
+        "prompts/orchestrator/00-intake.md updated with a budget-complexity estimate step: after goals and scope are captured, synthesizer produces a rough order-of-magnitude cost range based on goal count, compliance framework count, infrastructure domain count, and greenfield vs brownfield indicator",
+        "If estimated range exceeds stated envelope by more than 25%, synthesizer emits a BUDGET_GAP_WARNING block containing: stated envelope, estimated range, gap percentage, and prompt for consultant to choose (a) revise envelope, (b) reduce scope, or (c) proceed with documented risk acceptance",
+        "HITL gate in 00-intake.md gains mandatory checklist item: If a BUDGET_GAP_WARNING was raised, a DEC-NNN decision recording the resolution choice is present in _decisions.md",
+        "Phase 00 may not ratify scope.md until budget gate is cleared: either no warning raised, or warning raised and DEC-NNN recorded",
+        "backlog/change-requests/CR-2026-005.md status updated to shipped",
+        "ruff and mypy pass",
+        "pytest passes"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-045",
+      "title": "Generalise assumption revalidation gate to all phases (CR-2026-006)",
+      "description": "As a consultant, I want every phase HITL gate to enforce that all assumptions flagged requires_revalidation:true targeting that phase are formally resolved before ratification, so _assumptions.md is accurate at engagement close.",
+      "acceptanceCriteria": [
+        "Assumption schema doc (or templates/assumption.template.md) gains three new optional fields: resolution_status: pending | resolved | deferred; resolved_in_phase: phase identifier; resolution_note: free text",
+        "Each of the six orchestrator prompts (00-intake through 05-handover) has its HITL gate checklist updated with: All assumptions in _assumptions.md with requires_revalidation:true and target_phase matching this phase have resolution_status:resolved or resolution_status:deferred with a non-empty resolution_note",
+        "03-mapping.md specifically updated per CR-2026-006: HITL Gate 1 checklist item added and service-map template gains an Open Assumptions Resolution section listing unresolved assumptions targeting this phase",
+        "Meridian-Logistics/_assumptions.md backfilled: ASM-002 given resolution_status:deferred, resolved_in_phase:03-mapping, and resolution_note explaining the deferral (MSP delivery capacity not formally validated but accepted given engagement scope)",
+        "Validator updated: any assumption with requires_revalidation:true and a non-empty target_phase must have a non-empty resolution_status field; missing resolution_status on such assumptions produces a validation error",
+        "Validator runs green on updated Meridian-Logistics engagement",
+        "backlog/change-requests/CR-2026-006.md status updated to shipped",
+        "pytest passes",
+        "ruff and mypy pass"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": ""
+    }
+  ]
+}
