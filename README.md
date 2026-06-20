@@ -24,6 +24,7 @@ strategic-consultation/
 ├── harness/                    # CLI tools: init, enter_phase, decay_check, explain, check_contradictions
 ├── backlog/
 │   └── change-requests/        # CR-YYYY-NNN.md retro change requests
+├── tasks/                      # PRDs driving the harness build (prd-*.md)
 └── .ralph/                     # Ralph autonomous-agent harness (vendored in-repo; upstream ts444/ralph)
     ├── prd.json                # Active PRD driving the Ralph build loop
     ├── progress.txt            # Ralph iteration progress log
